@@ -35,5 +35,4 @@ uv run pytest
 
 ## AI use
 
-The `habits.py` module and its tests (Checkpoint 2) were written with the help of Claude Code,
-an AI coding assistant.
+The `habits.py` module and its tests (Checkpoint 2) were written by hand and then got reviewed by claude code to spot mistakes and then refixed by hand.
