@@ -1,11 +1,38 @@
 import calendar
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, timedelta
 
 MIN_DAYS_PER_WEEK = 1
 MAX_DAYS_PER_WEEK = 7
 
 ONE_DAY = timedelta(days=1)
+
+
+class HabitError(Exception):
+    pass
+
+
+class DuplicateHabitError(HabitError):
+    pass
+
+
+class UnknownHabitError(HabitError):
+    pass
+
+
+class FutureCheckInError(HabitError):
+    pass
+
+
+class InvalidDateError(HabitError):
+    pass
+
+
+@dataclass(frozen=True)
+class Habit:
+    name: str
+    days_per_week: int
+    check_ins: list[date] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
