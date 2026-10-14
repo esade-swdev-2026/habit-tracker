@@ -16,13 +16,19 @@ uv run habit-tracker add reading --days 3
 ```
 ## I/O boundary (shell)
 
-All I/O lives in `src/habit_tracker/cli.py`:
-- line 17: `typer.echo(..., err=True)` — prints validation error to stderr
-- line 18: `raise typer.Exit(code=1)` — exits with error code
-- line 19: `typer.echo(...)` — prints confirmation to stdout
+All I/O lives in two files:
 
-Everything else in `src/` is pure (no file access, no printing, no exit). The rules for
-streaks, the monthly summary and the days-per-week check live in `src/habit_tracker/habits.py`.
+- `src/habit_tracker/cli.py` — the terminal and the clock. Each command prints its result with
+  `typer.echo`, and is the only code that calls `date.today()`. Errors go through one helper,
+  `reporting_errors`, which catches `HabitError` and `OSError`; `fail` prints the message to
+  stderr and exits with code 1. No other code exits with an error code.
+- `src/habit_tracker/storage.py` — the data file. `data_file` reads the `HABIT_TRACKER_FILE`
+  environment variable (default `habits.json`), and `load_habits` and `save_habits` read and
+  write the JSON file.
+
+`src/habit_tracker/habits.py` is pure (no file access, no printing, no exit, no clock): the rules
+for streaks, the monthly summary, check-ins and the days-per-week check live there, and get
+today's date passed in as an argument.
 
 ## Develop
 
