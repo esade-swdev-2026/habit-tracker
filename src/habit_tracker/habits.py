@@ -1,11 +1,41 @@
 import calendar
-from dataclasses import dataclass
-from datetime import date, timedelta
+from dataclasses import dataclass, field, replace
+from datetime import date, datetime, timedelta
 
 MIN_DAYS_PER_WEEK = 1
 MAX_DAYS_PER_WEEK = 7
 
 ONE_DAY = timedelta(days=1)
+
+DAY_FORMAT = "%Y-%m-%d"
+MONTH_FORMAT = "%Y-%m"
+
+
+class HabitError(Exception):
+    pass
+
+
+class DuplicateHabitError(HabitError):
+    pass
+
+
+class UnknownHabitError(HabitError):
+    pass
+
+
+class FutureCheckInError(HabitError):
+    pass
+
+
+class InvalidDateError(HabitError):
+    pass
+
+
+@dataclass(frozen=True)
+class Habit:
+    name: str
+    days_per_week: int
+    check_ins: list[date] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -65,4 +95,55 @@ def format_summary(habit: str, summary: MonthlySummary) -> list[str]:
         f"{habit}: {summary.year}-{summary.month:02d}",
         f"{summary.days_done} of {summary.days_in_month} days done",
         f"{summary.completion_rate:.0%} complete",
+    ]
+
+
+def find_habit(habits: list[Habit], name: str) -> Habit:
+    for habit in habits:
+        if habit.name == name:
+            return habit
+    raise UnknownHabitError(f"no habit called '{name}'")
+
+
+def add_habit(habits: list[Habit], name: str, days_per_week: int) -> list[Habit]:
+    if any(habit.name == name for habit in habits):
+        raise DuplicateHabitError(f"habit '{name}' already exists")
+    return [*habits, Habit(name=name, days_per_week=days_per_week)]
+
+
+def check_in(habits: list[Habit], name: str, day: date, today: date) -> list[Habit]:
+    habit = find_habit(habits, name)
+    if day > today:
+        raise FutureCheckInError(f"{day.strftime(DAY_FORMAT)} has not happened yet")
+    checked_in = replace(habit, check_ins=sorted({*habit.check_ins, day}))
+    return [checked_in if other.name == name else other for other in habits]
+
+
+def parse_day(text: str) -> date:
+    try:
+        return datetime.strptime(text, DAY_FORMAT).date()
+    except ValueError as error:
+        raise InvalidDateError(f"date must look like 2026-10-12, not '{text}'") from error
+
+
+def parse_month(text: str) -> date:
+    try:
+        return datetime.strptime(text, MONTH_FORMAT).date()
+    except ValueError as error:
+        raise InvalidDateError(f"month must look like 2026-10, not '{text}'") from error
+
+
+def format_day_count(days: int) -> str:
+    unit = "day" if days == 1 else "days"
+    return f"{days} {unit}"
+
+
+def format_habit(habit: Habit) -> str:
+    return f"{habit.name}: {format_day_count(habit.days_per_week)} per week"
+
+
+def format_streaks(habit: str, current: int, longest: int) -> list[str]:
+    return [
+        f"{habit}: {format_day_count(current)} in a row",
+        f"longest streak: {format_day_count(longest)}",
     ]

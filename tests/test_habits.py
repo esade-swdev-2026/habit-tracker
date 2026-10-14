@@ -3,13 +3,25 @@ from datetime import date
 import pytest
 
 from habit_tracker.habits import (
+    DuplicateHabitError,
+    FutureCheckInError,
+    Habit,
+    InvalidDateError,
     MonthlySummary,
+    UnknownHabitError,
+    add_habit,
+    check_in,
     completion_rate,
     current_streak,
+    find_habit,
+    format_habit,
+    format_streaks,
     format_summary,
     is_valid_days_per_week,
     longest_streak,
     monthly_summary,
+    parse_day,
+    parse_month,
 )
 
 TODAY = date(2026, 10, 9)
@@ -117,4 +129,133 @@ def test_summary_lines_show_the_month_the_count_and_the_rate() -> None:
         "reading: 2026-09",
         "3 of 30 days done",
         "10% complete",
+    ]
+
+
+@pytest.fixture
+def habits() -> list[Habit]:
+    return [Habit("reading", 3), Habit("running", 1)]
+
+
+def test_adding_a_habit_keeps_the_ones_already_there(habits: list[Habit]) -> None:
+    assert add_habit(habits, "juggling", 2) == [
+        Habit("reading", 3),
+        Habit("running", 1),
+        Habit("juggling", 2),
+    ]
+
+
+def test_adding_a_habit_does_not_change_the_list_it_was_given(habits: list[Habit]) -> None:
+    add_habit(habits, "juggling", 2)
+
+    assert habits == [Habit("reading", 3), Habit("running", 1)]
+
+
+def test_adding_the_same_name_twice_raises_duplicate_habit_error(habits: list[Habit]) -> None:
+    with pytest.raises(DuplicateHabitError, match="habit 'reading' already exists"):
+        add_habit(habits, "reading", 5)
+
+
+def test_find_habit_returns_the_habit_with_that_name(habits: list[Habit]) -> None:
+    assert find_habit(habits, "running") == Habit("running", 1)
+
+
+def test_finding_a_habit_nobody_added_raises_unknown_habit_error(habits: list[Habit]) -> None:
+    with pytest.raises(UnknownHabitError, match="no habit called 'juggling'"):
+        find_habit(habits, "juggling")
+
+
+def test_checking_in_records_the_day_on_that_habit_only(habits: list[Habit]) -> None:
+    checked_in = check_in(habits, "reading", TODAY, TODAY)
+
+    assert find_habit(checked_in, "reading").check_ins == [TODAY]
+    assert find_habit(checked_in, "running").check_ins == []
+
+
+def test_checking_in_does_not_change_the_list_it_was_given(habits: list[Habit]) -> None:
+    check_in(habits, "reading", TODAY, TODAY)
+
+    assert find_habit(habits, "reading").check_ins == []
+
+
+def test_checking_in_the_same_day_twice_records_it_once(habits: list[Habit]) -> None:
+    once = check_in(habits, "reading", TODAY, TODAY)
+    twice = check_in(once, "reading", TODAY, TODAY)
+
+    assert find_habit(twice, "reading").check_ins == [TODAY]
+
+
+def test_an_earlier_day_checked_in_later_ends_up_in_date_order(habits: list[Habit]) -> None:
+    earlier = date(2026, 10, 7)
+    today_first = check_in(habits, "reading", TODAY, TODAY)
+    then_earlier = check_in(today_first, "reading", earlier, TODAY)
+
+    assert find_habit(then_earlier, "reading").check_ins == [earlier, TODAY]
+
+
+def test_checking_in_a_future_day_raises_future_check_in_error(habits: list[Habit]) -> None:
+    tomorrow = date(2026, 10, 10)
+
+    with pytest.raises(FutureCheckInError, match="2026-10-10 has not happened yet"):
+        check_in(habits, "reading", tomorrow, TODAY)
+
+
+def test_checking_in_a_habit_nobody_added_raises_unknown_habit_error(habits: list[Habit]) -> None:
+    with pytest.raises(UnknownHabitError, match="no habit called 'juggling'"):
+        check_in(habits, "juggling", TODAY, TODAY)
+
+
+def test_parse_day_reads_a_good_date() -> None:
+    assert parse_day("2026-10-12") == date(2026, 10, 12)
+
+
+@pytest.mark.parametrize("text", ["yesterday", "09/10/2026", "2026-02-30", "2026-10", ""])
+def test_parse_day_rejects_text_that_is_not_a_day(text: str) -> None:
+    with pytest.raises(InvalidDateError):
+        parse_day(text)
+
+
+def test_parse_day_error_shows_what_a_date_should_look_like() -> None:
+    with pytest.raises(InvalidDateError) as error:
+        parse_day("yesterday")
+
+    assert str(error.value) == "date must look like 2026-10-12, not 'yesterday'"
+
+
+def test_parse_month_reads_a_good_month_as_its_first_day() -> None:
+    assert parse_month("2026-10") == date(2026, 10, 1)
+
+
+@pytest.mark.parametrize("text", ["october", "2026-13", "2026-10-09", "2026", ""])
+def test_parse_month_rejects_text_that_is_not_a_month(text: str) -> None:
+    with pytest.raises(InvalidDateError):
+        parse_month(text)
+
+
+def test_format_habit_shows_the_days_per_week() -> None:
+    assert format_habit(Habit("reading", 3)) == "reading: 3 days per week"
+
+
+def test_format_habit_says_day_not_days_for_one() -> None:
+    assert format_habit(Habit("running", 1)) == "running: 1 day per week"
+
+
+def test_streak_lines_for_a_one_day_streak() -> None:
+    assert format_streaks("reading", 1, 4) == [
+        "reading: 1 day in a row",
+        "longest streak: 4 days",
+    ]
+
+
+def test_streak_lines_for_a_four_day_streak() -> None:
+    assert format_streaks("reading", 4, 4) == [
+        "reading: 4 days in a row",
+        "longest streak: 4 days",
+    ]
+
+
+def test_streak_lines_for_no_streak_yet() -> None:
+    assert format_streaks("reading", 0, 0) == [
+        "reading: 0 days in a row",
+        "longest streak: 0 days",
     ]
