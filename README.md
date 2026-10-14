@@ -36,3 +36,5 @@ uv run pytest
 ## AI use
 
 The `habits.py` module and its tests (Checkpoint 2) were written by hand and then got reviewed by claude code to spot mistakes and then refixed by hand.
+
+The commands in `cli.py` and their tests in `test_cli.py` (issue #3): I used Claude Code (Anthropic) to implement this issue. I gave it the specification and constraints, and it wrote the code and tests and ran the checks; I reviewed the changes, ran the git steps and opened the pull request.
