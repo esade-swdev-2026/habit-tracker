@@ -115,6 +115,21 @@ reading: 2026-10
 6% complete
 ```
 
+### 7. Check this week against your goal
+
+```bash
+uv run habit-tracker week reading
+```
+
+On October 16, 2026 (a Friday), the output was:
+
+```text
+reading: 2 of 3 days this week
+1 day to go
+```
+
+A week runs from Monday to Sunday. The goal is the number you gave with `--days`.
+
 These results reflect the two completed days recorded in October 2026. Results may differ if the commands are executed on another date.
 
 After testing, you can return to the default storage location:
@@ -131,7 +146,10 @@ unset HABIT_TRACKER_FILE
 | `done` | Records a completed day for a habit. | Required: `habit`. Optional: `--date YYYY-MM-DD` (default: today). |
 | `streak` | Shows the current and longest streak. | Required: `habit`. |
 | `summary` | Shows completed days and completion percentage for a month. | Required: `habit`. Optional: `--month YYYY-MM` (default: current month). |
+| `week` | Shows how many days this week the habit was done, against its weekly goal. | Required: `habit`. |
 | `list` | Lists every habit and its weekly goal. | No arguments required. |
+
+Habit names ignore capital letters and extra spaces: `Reading`, `reading` and ` reading ` are the same habit. A name with several words needs quotes, for example `uv run habit-tracker add "morning run" --days 2`.
 
 To see the arguments and options of a specific command, use `--help`:
 
@@ -140,6 +158,7 @@ uv run habit-tracker add --help
 uv run habit-tracker done --help
 uv run habit-tracker streak --help
 uv run habit-tracker summary --help
+uv run habit-tracker week --help
 uv run habit-tracker list --help
 ```
 
@@ -177,6 +196,8 @@ days must be between 1 and 7
 
 The command exits with status code `1`.
 
+The same happens for every other kind of bad input: a blank habit name, a habit that already exists, a habit that was never added, a day that is already checked in, a date or month written in the wrong format, a date in the future, and a data file that is not a valid habit file. Each one prints a one-line message and exits with code `1`, without a traceback.
+
 ## Where habits are stored
 
 Habit Tracker stores habits and their completed dates in a JSON file called `habits.json`.
@@ -196,7 +217,7 @@ export HABIT_TRACKER_FILE="$(mktemp -d)/habits.json"
 This creates a separate temporary location for testing.
 
 - `add` and `done` save data to the JSON file.
-- `list`, `streak`, and `summary` read the saved data.
+- `list`, `streak`, `summary` and `week` read the saved data.
 
 To return to the default location in the current terminal:
 
@@ -247,6 +268,8 @@ The breakdown of this submission into four tasks and the task descriptions in th
 All documented commands and outputs will be verified manually before submission.
 
 For issue #3: The commands in `cli.py` and their tests in `test_cli.py`: I used Claude Code (Anthropic) to implement this issue. I gave it the specification and constraints, and it wrote the code and tests and ran the checks; I reviewed the changes, ran the git steps and opened the pull request.
+
+The fixes after the `v0.5` tag (blank and duplicate names, checks on the data file, checking in the same day twice, and the `week` command) were written by Claude Code in `habits.py`, `storage.py`, `cli.py`, their tests and this README, then reviewed and committed by Can.
 
 For issue #4, ChatGPT (OpenAI) was used to understand the documentation requirements, structure and draft the README, explain the Git workflow, and help review the documentation. The CLI commands and their outputs were tested manually.
 

@@ -12,10 +12,12 @@ from habit_tracker.habits import (
     add_habit,
     check_in,
     current_streak,
+    days_done_this_week,
     find_habit,
     format_habit,
     format_streaks,
     format_summary,
+    format_week,
     is_valid_days_per_week,
     longest_streak,
     monthly_summary,
@@ -71,16 +73,16 @@ def done(
         path = data_file()
         habits = check_in(load_habits(path), habit, day, today)
         save_habits(path, habits)
-        typer.echo(f"Checked in {habit} on {day.isoformat()}")
+        typer.echo(f"Checked in {find_habit(habits, habit).name} on {day.isoformat()}")
 
 
 @app.command()
 def streak(habit: str) -> None:
     """Show the current and longest streak of a habit."""
     with reporting_errors():
-        check_ins = find_habit(load_habits(data_file()), habit).check_ins
-        current = current_streak(check_ins, date.today())
-        typer.echo("\n".join(format_streaks(habit, current, longest_streak(check_ins))))
+        found = find_habit(load_habits(data_file()), habit)
+        current = current_streak(found.check_ins, date.today())
+        typer.echo("\n".join(format_streaks(found.name, current, longest_streak(found.check_ins))))
 
 
 @app.command()
@@ -91,9 +93,18 @@ def summary(
     """Show how many days of a month a habit was done."""
     with reporting_errors():
         first_day = parse_month(month) if month is not None else date.today()
-        check_ins = find_habit(load_habits(data_file()), habit).check_ins
-        result = monthly_summary(check_ins, first_day.year, first_day.month)
-        typer.echo("\n".join(format_summary(habit, result)))
+        found = find_habit(load_habits(data_file()), habit)
+        result = monthly_summary(found.check_ins, first_day.year, first_day.month)
+        typer.echo("\n".join(format_summary(found.name, result)))
+
+
+@app.command()
+def week(habit: str) -> None:
+    """Show this week's check-ins against the weekly goal."""
+    with reporting_errors():
+        found = find_habit(load_habits(data_file()), habit)
+        days_done = days_done_this_week(found.check_ins, date.today())
+        typer.echo("\n".join(format_week(found, days_done)))
 
 
 @app.command("list")
