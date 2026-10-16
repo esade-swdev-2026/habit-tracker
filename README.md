@@ -116,3 +116,4 @@ ChatGPT was used to understand issue #4, structure the README, and review the do
 Add each other teammate's actual AI use here after asking them.
 Do not guess.
 -->
+The commands in `cli.py` and their tests in `test_cli.py` (issue #3): I used Claude Code (Anthropic) to implement this issue. I gave it the specification and constraints, and it wrote the code and tests and ran the checks; I reviewed the changes, ran the git steps and opened the pull request.
