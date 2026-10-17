@@ -9,6 +9,7 @@ from habit_tracker.habits import (
     FutureCheckInError,
     Habit,
     InvalidDateError,
+    InvalidDaysPerWeekError,
     MonthlySummary,
     UnknownHabitError,
     add_habit,
@@ -21,6 +22,7 @@ from habit_tracker.habits import (
     format_streaks,
     format_summary,
     format_week,
+    has_duplicate_names,
     is_valid_days_per_week,
     longest_streak,
     monthly_summary,
@@ -164,6 +166,14 @@ def test_adding_the_same_name_twice_raises_duplicate_habit_error(habits: list[Ha
 def test_adding_a_blank_name_raises_blank_name_error(habits: list[Habit], name: str) -> None:
     with pytest.raises(BlankNameError, match="habit name cannot be blank"):
         add_habit(habits, name, 3)
+
+
+@pytest.mark.parametrize("days", [0, 8, -1])
+def test_adding_a_habit_with_days_outside_one_to_seven_is_rejected(
+    habits: list[Habit], days: int
+) -> None:
+    with pytest.raises(InvalidDaysPerWeekError, match="days must be between 1 and 7"):
+        add_habit(habits, "juggling", days)
 
 
 def test_adding_a_habit_trims_the_spaces_around_its_name() -> None:
@@ -316,3 +326,18 @@ def test_week_lines_say_when_the_goal_is_reached() -> None:
         "reading: 4 of 3 days this week",
         "goal reached",
     ]
+
+
+def test_habits_with_different_names_have_no_duplicates(habits: list[Habit]) -> None:
+    assert not has_duplicate_names(habits)
+
+
+def test_no_habits_have_no_duplicates() -> None:
+    assert not has_duplicate_names([])
+
+
+@pytest.mark.parametrize("name", ["reading", "Reading", " READING "])
+def test_two_habits_whose_names_differ_only_in_case_or_spaces_are_duplicates(
+    habits: list[Habit], name: str
+) -> None:
+    assert has_duplicate_names([*habits, Habit(name, 5)])

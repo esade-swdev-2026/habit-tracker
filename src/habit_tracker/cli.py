@@ -7,7 +7,6 @@ import typer
 
 from habit_tracker.habits import (
     MAX_DAYS_PER_WEEK,
-    MIN_DAYS_PER_WEEK,
     HabitError,
     add_habit,
     check_in,
@@ -18,7 +17,6 @@ from habit_tracker.habits import (
     format_streaks,
     format_summary,
     format_week,
-    is_valid_days_per_week,
     longest_streak,
     monthly_summary,
     parse_day,
@@ -26,7 +24,7 @@ from habit_tracker.habits import (
 )
 from habit_tracker.storage import data_file, load_habits, save_habits
 
-app = typer.Typer(help="Track your daily habits.")
+app = typer.Typer(help="Track your daily habits.", no_args_is_help=True)
 
 NO_HABITS_MESSAGE = "No habits yet. Add one with: habit-tracker add reading --days 3"
 
@@ -40,8 +38,10 @@ def fail(message: str) -> NoReturn:
 def reporting_errors() -> Iterator[None]:
     try:
         yield
-    except (HabitError, OSError) as error:
+    except HabitError as error:
         fail(str(error))
+    except OSError as error:
+        fail(f"could not open the data file {error.filename}: {error.strerror}")
 
 
 @app.callback()
@@ -50,10 +50,8 @@ def main() -> None:
 
 
 @app.command()
-def add(habit: str, days: int = 7) -> None:
+def add(habit: str, days: int = MAX_DAYS_PER_WEEK) -> None:
     """Add a habit you want to do some days per week."""
-    if not is_valid_days_per_week(days):
-        fail(f"days must be between {MIN_DAYS_PER_WEEK} and {MAX_DAYS_PER_WEEK}")
     with reporting_errors():
         path = data_file()
         habits = add_habit(load_habits(path), habit, days)

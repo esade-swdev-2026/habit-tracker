@@ -269,7 +269,9 @@ All documented commands and outputs will be verified manually before submission.
 
 For issue #3: The commands in `cli.py` and their tests in `test_cli.py`: I used Claude Code (Anthropic) to implement this issue. I gave it the specification and constraints, and it wrote the code and tests and ran the checks; I reviewed the changes, ran the git steps and opened the pull request.
 
-The fixes after the `v0.5` tag (blank and duplicate names, checks on the data file, checking in the same day twice, and the `week` command) were written by Claude Code in `habits.py`, `storage.py`, `cli.py`, their tests and this README, then reviewed and committed by Can.
+The fixes after the first `v0.5` tag of 16 October (blank and duplicate names, checks on the data file, checking in the same day twice, and the `week` command) were written by Claude Code in `habits.py`, `storage.py`, `cli.py`, their tests and this README, then reviewed and committed by Can.
+
+The last fixes before the partial submission (habit names in the data file are cleaned and checked for duplicates, the 1 to 7 days rule moved into `habits.py`, and a clear message when the data file cannot be opened) were also written by Claude Code, in `habits.py`, `storage.py`, `cli.py` and their tests, and reviewed by the team before merging.
 
 For issue #4, ChatGPT (OpenAI) was used to understand the documentation requirements, structure and draft the README, explain the Git workflow, and help review the documentation. The CLI commands and their outputs were tested manually.
 

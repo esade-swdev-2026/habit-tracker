@@ -39,6 +39,10 @@ class AlreadyCheckedInError(HabitError):
     pass
 
 
+class InvalidDaysPerWeekError(HabitError):
+    pass
+
+
 @dataclass(frozen=True)
 class Habit:
     name: str
@@ -124,8 +128,17 @@ def find_habit(habits: list[Habit], name: str) -> Habit:
     raise UnknownHabitError(f"no habit called '{clean_name(name)}'")
 
 
+def has_duplicate_names(habits: list[Habit]) -> bool:
+    names = [clean_name(habit.name).casefold() for habit in habits]
+    return len(set(names)) != len(names)
+
+
 def add_habit(habits: list[Habit], name: str, days_per_week: int) -> list[Habit]:
     name = clean_name(name)
+    if not is_valid_days_per_week(days_per_week):
+        raise InvalidDaysPerWeekError(
+            f"days must be between {MIN_DAYS_PER_WEEK} and {MAX_DAYS_PER_WEEK}"
+        )
     if any(same_name(habit.name, name) for habit in habits):
         raise DuplicateHabitError(f"habit '{name}' already exists")
     return [*habits, Habit(name=name, days_per_week=days_per_week)]
