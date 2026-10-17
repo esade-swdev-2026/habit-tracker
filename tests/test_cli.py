@@ -25,6 +25,7 @@ def test_add_shows_the_habit() -> None:
 def test_add_rejects_too_many_days() -> None:
     result = runner.invoke(app, ["add", "reading", "--days", "9"])
     assert result.exit_code == 1
+    assert "days must be between 1 and 7" in result.stderr
 
 
 def test_add_rejects_a_habit_that_already_exists() -> None:
@@ -100,3 +101,13 @@ def test_broken_data_file_gives_a_message_not_a_traceback(data_path: Path) -> No
     assert result.exit_code == 1
     assert f"{data_path} is not a valid habit file" in result.stderr
     assert "Traceback" not in result.output
+
+
+def test_a_data_file_that_cannot_be_opened_gives_a_message_not_a_traceback(
+    data_path: Path,
+) -> None:
+    data_path.mkdir()
+    result = runner.invoke(app, ["list"])
+    assert result.exit_code == 1
+    assert f"could not open the data file {data_path}" in result.stderr
+    assert "Errno" not in result.output

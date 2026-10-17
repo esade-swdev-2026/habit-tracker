@@ -8,6 +8,7 @@ from habit_tracker.storage import (
     DATA_FILE_ENV_VAR,
     DEFAULT_DATA_FILE,
     CorruptDataError,
+    HabitRecord,
     data_file,
     habit_from_record,
     habit_to_record,
@@ -33,6 +34,12 @@ def test_a_record_turns_back_into_the_same_habit() -> None:
 def test_a_record_with_a_broken_date_is_rejected() -> None:
     with pytest.raises(ValueError):
         habit_from_record({"name": "reading", "days_per_week": 3, "check_ins": ["yesterday"]})
+
+
+def test_a_record_name_loads_without_extra_spaces() -> None:
+    record: HabitRecord = {"name": "  morning   run ", "days_per_week": 2, "check_ins": []}
+
+    assert habit_from_record(record).name == "morning run"
 
 
 def test_the_data_file_is_habits_json_unless_told_otherwise(
@@ -87,6 +94,8 @@ def test_saving_replaces_what_was_in_the_file(tmp_path: Path) -> None:
         '{"habits": [{"name": "reading", "days_per_week": "3", "check_ins": []}]}',
         '{"habits": [{"name": "reading", "days_per_week": true, "check_ins": []}]}',
         '{"habits": [{"name": "reading", "days_per_week": 3, "check_ins": "2026-10-08"}]}',
+        '{"habits": [{"name": "Reading", "days_per_week": 3, "check_ins": []},'
+        ' {"name": "reading", "days_per_week": 5, "check_ins": []}]}',
     ],
 )
 def test_a_file_that_is_not_a_habit_file_is_reported(tmp_path: Path, content: str) -> None:
