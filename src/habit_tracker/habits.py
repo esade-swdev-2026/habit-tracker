@@ -31,6 +31,14 @@ class InvalidDateError(HabitError):
     pass
 
 
+class BlankNameError(HabitError):
+    pass
+
+
+class AlreadyCheckedInError(HabitError):
+    pass
+
+
 @dataclass(frozen=True)
 class Habit:
     name: str
@@ -98,15 +106,27 @@ def format_summary(habit: str, summary: MonthlySummary) -> list[str]:
     ]
 
 
+def clean_name(name: str) -> str:
+    cleaned = " ".join(name.split())
+    if not cleaned:
+        raise BlankNameError("habit name cannot be blank")
+    return cleaned
+
+
+def same_name(first: str, second: str) -> bool:
+    return clean_name(first).casefold() == clean_name(second).casefold()
+
+
 def find_habit(habits: list[Habit], name: str) -> Habit:
     for habit in habits:
-        if habit.name == name:
+        if same_name(habit.name, name):
             return habit
-    raise UnknownHabitError(f"no habit called '{name}'")
+    raise UnknownHabitError(f"no habit called '{clean_name(name)}'")
 
 
 def add_habit(habits: list[Habit], name: str, days_per_week: int) -> list[Habit]:
-    if any(habit.name == name for habit in habits):
+    name = clean_name(name)
+    if any(same_name(habit.name, name) for habit in habits):
         raise DuplicateHabitError(f"habit '{name}' already exists")
     return [*habits, Habit(name=name, days_per_week=days_per_week)]
 
@@ -115,8 +135,28 @@ def check_in(habits: list[Habit], name: str, day: date, today: date) -> list[Hab
     habit = find_habit(habits, name)
     if day > today:
         raise FutureCheckInError(f"{day.strftime(DAY_FORMAT)} has not happened yet")
-    checked_in = replace(habit, check_ins=sorted({*habit.check_ins, day}))
-    return [checked_in if other.name == name else other for other in habits]
+    if day in habit.check_ins:
+        raise AlreadyCheckedInError(
+            f"{habit.name} is already checked in on {day.strftime(DAY_FORMAT)}"
+        )
+    checked_in = replace(habit, check_ins=sorted([*habit.check_ins, day]))
+    return [checked_in if other is habit else other for other in habits]
+
+
+def start_of_week(day: date) -> date:
+    return day - timedelta(days=day.weekday())
+
+
+def days_done_this_week(check_ins: list[date], today: date) -> int:
+    monday = start_of_week(today)
+    return len({day for day in check_ins if monday <= day <= today})
+
+
+def format_week(habit: Habit, days_done: int) -> list[str]:
+    goal = habit.days_per_week
+    left = max(goal - days_done, 0)
+    status = "goal reached" if left == 0 else f"{format_day_count(left)} to go"
+    return [f"{habit.name}: {days_done} of {format_day_count(goal)} this week", status]
 
 
 def parse_day(text: str) -> date:

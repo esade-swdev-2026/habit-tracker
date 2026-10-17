@@ -81,6 +81,12 @@ def test_saving_replaces_what_was_in_the_file(tmp_path: Path) -> None:
         "[]",
         '{"habits": [{"name": "reading"}]}',
         '{"habits": [{"name": "reading", "days_per_week": 3, "check_ins": ["yesterday"]}]}',
+        '{"habits": [{"name": 5, "days_per_week": 3, "check_ins": []}]}',
+        '{"habits": [{"name": "  ", "days_per_week": 3, "check_ins": []}]}',
+        '{"habits": [{"name": "reading", "days_per_week": 99, "check_ins": []}]}',
+        '{"habits": [{"name": "reading", "days_per_week": "3", "check_ins": []}]}',
+        '{"habits": [{"name": "reading", "days_per_week": true, "check_ins": []}]}',
+        '{"habits": [{"name": "reading", "days_per_week": 3, "check_ins": "2026-10-08"}]}',
     ],
 )
 def test_a_file_that_is_not_a_habit_file_is_reported(tmp_path: Path, content: str) -> None:

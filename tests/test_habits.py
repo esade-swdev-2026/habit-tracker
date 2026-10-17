@@ -3,6 +3,8 @@ from datetime import date
 import pytest
 
 from habit_tracker.habits import (
+    AlreadyCheckedInError,
+    BlankNameError,
     DuplicateHabitError,
     FutureCheckInError,
     Habit,
@@ -13,10 +15,12 @@ from habit_tracker.habits import (
     check_in,
     completion_rate,
     current_streak,
+    days_done_this_week,
     find_habit,
     format_habit,
     format_streaks,
     format_summary,
+    format_week,
     is_valid_days_per_week,
     longest_streak,
     monthly_summary,
@@ -156,6 +160,28 @@ def test_adding_the_same_name_twice_raises_duplicate_habit_error(habits: list[Ha
         add_habit(habits, "reading", 5)
 
 
+@pytest.mark.parametrize("name", ["", "   ", "\t"])
+def test_adding_a_blank_name_raises_blank_name_error(habits: list[Habit], name: str) -> None:
+    with pytest.raises(BlankNameError, match="habit name cannot be blank"):
+        add_habit(habits, name, 3)
+
+
+def test_adding_a_habit_trims_the_spaces_around_its_name() -> None:
+    assert add_habit([], "  morning   run ", 2) == [Habit("morning run", 2)]
+
+
+@pytest.mark.parametrize("name", ["Reading", " reading", "READING  "])
+def test_a_name_that_differs_only_in_case_or_spaces_is_a_duplicate(
+    habits: list[Habit], name: str
+) -> None:
+    with pytest.raises(DuplicateHabitError):
+        add_habit(habits, name, 5)
+
+
+def test_find_habit_ignores_case_and_extra_spaces(habits: list[Habit]) -> None:
+    assert find_habit(habits, " Running ") == Habit("running", 1)
+
+
 def test_find_habit_returns_the_habit_with_that_name(habits: list[Habit]) -> None:
     assert find_habit(habits, "running") == Habit("running", 1)
 
@@ -178,11 +204,13 @@ def test_checking_in_does_not_change_the_list_it_was_given(habits: list[Habit]) 
     assert find_habit(habits, "reading").check_ins == []
 
 
-def test_checking_in_the_same_day_twice_records_it_once(habits: list[Habit]) -> None:
+def test_checking_in_the_same_day_twice_raises_already_checked_in_error(
+    habits: list[Habit],
+) -> None:
     once = check_in(habits, "reading", TODAY, TODAY)
-    twice = check_in(once, "reading", TODAY, TODAY)
 
-    assert find_habit(twice, "reading").check_ins == [TODAY]
+    with pytest.raises(AlreadyCheckedInError, match="reading is already checked in on 2026-10-09"):
+        check_in(once, "reading", TODAY, TODAY)
 
 
 def test_an_earlier_day_checked_in_later_ends_up_in_date_order(habits: list[Habit]) -> None:
@@ -258,4 +286,33 @@ def test_streak_lines_for_no_streak_yet() -> None:
     assert format_streaks("reading", 0, 0) == [
         "reading: 0 days in a row",
         "longest streak: 0 days",
+    ]
+
+
+def test_days_done_this_week_counts_from_monday_to_today(check_ins: list[date]) -> None:
+    # TODAY is Friday 9 October; that week started on Monday 5 October.
+    assert days_done_this_week(check_ins, TODAY) == 3
+
+
+def test_days_done_this_week_is_zero_on_a_monday_with_no_check_in(check_ins: list[date]) -> None:
+    assert days_done_this_week(check_ins, date(2026, 10, 5)) == 0
+
+
+def test_days_done_this_week_counts_a_monday_check_in() -> None:
+    monday = date(2026, 10, 5)
+
+    assert days_done_this_week([monday], monday) == 1
+
+
+def test_week_lines_show_how_many_days_are_left() -> None:
+    assert format_week(Habit("reading", 3), 1) == [
+        "reading: 1 of 3 days this week",
+        "2 days to go",
+    ]
+
+
+def test_week_lines_say_when_the_goal_is_reached() -> None:
+    assert format_week(Habit("reading", 3), 4) == [
+        "reading: 4 of 3 days this week",
+        "goal reached",
     ]

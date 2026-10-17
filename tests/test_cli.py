@@ -41,6 +41,29 @@ def test_list_shows_a_habit_added_in_an_earlier_run() -> None:
     assert "reading: 3 days per week" in result.stdout
 
 
+def test_add_rejects_a_blank_name() -> None:
+    result = runner.invoke(app, ["add", "   "])
+    assert result.exit_code == 1
+    assert "habit name cannot be blank" in result.stderr
+
+
+def test_done_twice_on_the_same_day_says_so() -> None:
+    runner.invoke(app, ["add", "reading"])
+    runner.invoke(app, ["done", "reading", "--date", "2026-09-10"])
+    result = runner.invoke(app, ["done", "Reading", "--date", "2026-09-10"])
+    assert result.exit_code == 1
+    assert "reading is already checked in on 2026-09-10" in result.stderr
+
+
+def test_week_compares_this_week_with_the_goal() -> None:
+    runner.invoke(app, ["add", "reading", "--days", "3"])
+    runner.invoke(app, ["done", "reading"])
+    result = runner.invoke(app, ["week", "reading"])
+    assert result.exit_code == 0
+    assert "reading: 1 of 3 days this week" in result.stdout
+    assert "2 days to go" in result.stdout
+
+
 def test_streak_after_checking_in_today() -> None:
     runner.invoke(app, ["add", "reading"])
     runner.invoke(app, ["done", "reading"])
