@@ -147,6 +147,7 @@ unset HABIT_TRACKER_FILE
 | `streak` | Shows the current and longest streak. | Required: `habit`. |
 | `summary` | Shows completed days and completion percentage for a month. | Required: `habit`. Optional: `--month YYYY-MM` (default: current month). |
 | `week` | Shows how many days this week the habit was done, against its weekly goal. | Required: `habit`. |
+| `history` | Lists every day a habit was done, oldest first. | Required: `habit`. |
 | `list` | Lists every habit and its weekly goal. | No arguments required. |
 
 Habit names ignore capital letters and extra spaces: `Reading`, `reading` and ` reading ` are the same habit. A name with several words needs quotes, for example `uv run habit-tracker add "morning run" --days 2`.
@@ -159,6 +160,7 @@ uv run habit-tracker done --help
 uv run habit-tracker streak --help
 uv run habit-tracker summary --help
 uv run habit-tracker week --help
+uv run habit-tracker history --help
 uv run habit-tracker list --help
 ```
 
@@ -217,7 +219,7 @@ export HABIT_TRACKER_FILE="$(mktemp -d)/habits.json"
 This creates a separate temporary location for testing.
 
 - `add` and `done` save data to the JSON file.
-- `list`, `streak`, `summary` and `week` read the saved data.
+- `list`, `streak`, `summary`, `week` and `history` read the saved data.
 
 To return to the default location in the current terminal:
 
@@ -231,6 +233,7 @@ unset HABIT_TRACKER_FILE
 The project separates its logic, storage, and command-line interface into different modules:
 
 - `src/habit_tracker/habits.py` contains the core habit rules and logic, including check-ins, streak calculations, input validation, and monthly summaries.
+- `src/habit_tracker/history.py` formats the list of days a habit was done, for the `history` command.
 - `src/habit_tracker/storage.py` handles reading and writing habit data in the JSON file.
 - `src/habit_tracker/cli.py` defines the terminal commands, displays results and errors, and connects the commands to the habit logic and storage.
 - `src/habit_tracker/__main__.py` provides another entry point for running the Python package.
@@ -275,3 +278,4 @@ The last fixes before the partial submission (habit names in the data file are c
 
 For issue #4, ChatGPT (OpenAI) was used to understand the documentation requirements, structure and draft the README, explain the Git workflow, and help review the documentation. The CLI commands and their outputs were tested manually.
 
+For Checkpoint 3, the `history` command (`history.py`, `test_history.py`, the command in `cli.py`, its tests in `test_cli.py` and the README lines about it) was written by Claude Code from the backlog item, then reviewed and committed by Can.
