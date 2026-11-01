@@ -22,6 +22,7 @@ from habit_tracker.habits import (
     parse_day,
     parse_month,
 )
+from habit_tracker.history import format_history
 from habit_tracker.storage import data_file, load_habits, save_habits
 
 app = typer.Typer(help="Track your daily habits.", no_args_is_help=True)
@@ -103,6 +104,14 @@ def week(habit: str) -> None:
         found = find_habit(load_habits(data_file()), habit)
         days_done = days_done_this_week(found.check_ins, date.today())
         typer.echo("\n".join(format_week(found, days_done)))
+
+
+@app.command()
+def history(habit: str) -> None:
+    """Show every day a habit was done, oldest first."""
+    with reporting_errors():
+        found = find_habit(load_habits(data_file()), habit)
+        typer.echo("\n".join(format_history(found)))
 
 
 @app.command("list")

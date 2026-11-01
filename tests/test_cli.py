@@ -111,3 +111,18 @@ def test_a_data_file_that_cannot_be_opened_gives_a_message_not_a_traceback(
     assert result.exit_code == 1
     assert f"could not open the data file {data_path}" in result.stderr
     assert "Errno" not in result.output
+
+
+def test_history_lists_every_check_in_oldest_first() -> None:
+    runner.invoke(app, ["add", "reading"])
+    runner.invoke(app, ["done", "reading", "--date", "2026-09-11"])
+    runner.invoke(app, ["done", "reading", "--date", "2026-09-10"])
+    result = runner.invoke(app, ["history", "reading"])
+    assert result.exit_code == 0
+    assert result.stdout == "reading: done on 2 days\n2026-09-10\n2026-09-11\n"
+
+
+def test_history_rejects_an_unknown_habit() -> None:
+    result = runner.invoke(app, ["history", "juggling"])
+    assert result.exit_code == 1
+    assert "no habit called 'juggling'" in result.stderr
