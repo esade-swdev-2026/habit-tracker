@@ -12,7 +12,9 @@ from habit_tracker.habits import (
     check_in,
     current_streak,
     days_done_this_week,
+    delete_habit,
     find_habit,
+    format_day_count,
     format_habit,
     format_streaks,
     format_summary,
@@ -58,6 +60,18 @@ def add(habit: str, days: int = MAX_DAYS_PER_WEEK) -> None:
         habits = add_habit(load_habits(path), habit, days)
         save_habits(path, habits)
         typer.echo(f"Added {format_habit(find_habit(habits, habit))}")
+
+
+@app.command()
+def delete(habit: str) -> None:
+    """Delete a habit and every day it was checked in."""
+    with reporting_errors():
+        path = data_file()
+        habits = load_habits(path)
+        found = find_habit(habits, habit)
+        save_habits(path, delete_habit(habits, habit))
+        done_on = format_day_count(len(found.check_ins))
+        typer.echo(f"Deleted {found.name}, which was done on {done_on}")
 
 
 @app.command()

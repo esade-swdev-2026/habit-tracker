@@ -48,6 +48,22 @@ def test_add_rejects_a_blank_name() -> None:
     assert "habit name cannot be blank" in result.stderr
 
 
+def test_delete_removes_the_habit_from_the_list() -> None:
+    runner.invoke(app, ["add", "reading", "--days", "3"])
+    runner.invoke(app, ["add", "running", "--days", "2"])
+    runner.invoke(app, ["done", "reading", "--date", "2026-09-10"])
+    result = runner.invoke(app, ["delete", "Reading"])
+    assert result.exit_code == 0
+    assert result.stdout == "Deleted reading, which was done on 1 day\n"
+    assert runner.invoke(app, ["list"]).stdout == "running: 2 days per week\n"
+
+
+def test_delete_rejects_an_unknown_habit() -> None:
+    result = runner.invoke(app, ["delete", "juggling"])
+    assert result.exit_code == 1
+    assert "no habit called 'juggling'" in result.stderr
+
+
 def test_done_twice_on_the_same_day_says_so() -> None:
     runner.invoke(app, ["add", "reading"])
     runner.invoke(app, ["done", "reading", "--date", "2026-09-10"])

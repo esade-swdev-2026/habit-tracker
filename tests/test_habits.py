@@ -17,6 +17,7 @@ from habit_tracker.habits import (
     completion_rate,
     current_streak,
     days_done_this_week,
+    delete_habit,
     find_habit,
     format_habit,
     format_streaks,
@@ -199,6 +200,23 @@ def test_find_habit_returns_the_habit_with_that_name(habits: list[Habit]) -> Non
 def test_finding_a_habit_nobody_added_raises_unknown_habit_error(habits: list[Habit]) -> None:
     with pytest.raises(UnknownHabitError, match="no habit called 'juggling'"):
         find_habit(habits, "juggling")
+
+
+def test_deleting_a_habit_keeps_the_others_in_order(habits: list[Habit]) -> None:
+    with_third = add_habit(habits, "juggling", 2)
+
+    assert delete_habit(with_third, " Running ") == [Habit("reading", 3), Habit("juggling", 2)]
+
+
+def test_deleting_a_habit_does_not_change_the_list_it_was_given(habits: list[Habit]) -> None:
+    delete_habit(habits, "reading")
+
+    assert find_habit(habits, "reading") == Habit("reading", 3)
+
+
+def test_deleting_a_habit_nobody_added_raises_unknown_habit_error(habits: list[Habit]) -> None:
+    with pytest.raises(UnknownHabitError, match="no habit called 'juggling'"):
+        delete_habit(habits, "juggling")
 
 
 def test_checking_in_records_the_day_on_that_habit_only(habits: list[Habit]) -> None:

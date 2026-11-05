@@ -143,6 +143,7 @@ unset HABIT_TRACKER_FILE
 | Command | What it does | Arguments and options |
 |---|---|---|
 | `add` | Adds a new habit with a weekly goal. | Required: `habit`. Optional: `--days` (integer from 1 to 7, default 7). |
+| `delete` | Deletes a habit and all its completed days. This cannot be undone. | Required: `habit`. |
 | `done` | Records a completed day for a habit. | Required: `habit`. Optional: `--date YYYY-MM-DD` (default: today). |
 | `streak` | Shows the current and longest streak. | Required: `habit`. |
 | `summary` | Shows completed days and completion percentage for a month. | Required: `habit`. Optional: `--month YYYY-MM` (default: current month). |
@@ -156,6 +157,7 @@ To see the arguments and options of a specific command, use `--help`:
 
 ```bash
 uv run habit-tracker add --help
+uv run habit-tracker delete --help
 uv run habit-tracker done --help
 uv run habit-tracker streak --help
 uv run habit-tracker summary --help
@@ -220,6 +222,7 @@ This creates a separate temporary location for testing.
 
 - `add` and `done` save data to the JSON file.
 - `list`, `streak`, `summary`, `week` and `history` read the saved data.
+- `delete` removes a habit and its completed days from the file.
 
 To return to the default location in the current terminal:
 
@@ -277,5 +280,7 @@ The fixes after the first `v0.5` tag of 16 October (blank and duplicate names, c
 The last fixes before the partial submission (habit names in the data file are cleaned and checked for duplicates, the 1 to 7 days rule moved into `habits.py`, and a clear message when the data file cannot be opened) were also written by Claude Code, in `habits.py`, `storage.py`, `cli.py` and their tests, and reviewed by the team before merging.
 
 For issue #4, ChatGPT (OpenAI) was used to understand the documentation requirements, structure and draft the README, explain the Git workflow, and help review the documentation. The CLI commands and their outputs were tested manually.
+
+For Checkpoint 4, the `delete` command (`delete_habit` in `habits.py`, the command in `cli.py`, their tests and the README lines about it) was written by Claude Code, then reviewed and committed by Can.
 
 For Checkpoint 3, the `history` command (`history.py`, `test_history.py`, the command in `cli.py`, its tests in `test_cli.py` and the README lines about it) was written by Claude Code from the backlog item, then reviewed and committed by Can.
