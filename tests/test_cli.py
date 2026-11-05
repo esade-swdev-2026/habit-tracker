@@ -86,6 +86,24 @@ def test_done_rejects_a_badly_written_date() -> None:
     assert "not 'yesterday'" in result.stderr
 
 
+def test_undo_removes_a_check_in_from_the_history() -> None:
+    runner.invoke(app, ["add", "reading"])
+    runner.invoke(app, ["done", "reading", "--date", "2026-09-10"])
+    runner.invoke(app, ["done", "reading", "--date", "2026-09-11"])
+    result = runner.invoke(app, ["undo", "reading", "--date", "2026-09-10"])
+    assert result.exit_code == 0
+    assert result.stdout == "Removed the check-in of reading on 2026-09-10\n"
+    history = runner.invoke(app, ["history", "reading"])
+    assert history.stdout == "reading: done on 1 day\n2026-09-11\n"
+
+
+def test_undo_of_a_day_that_was_never_checked_in_says_so() -> None:
+    runner.invoke(app, ["add", "reading"])
+    result = runner.invoke(app, ["undo", "reading", "--date", "2026-09-10"])
+    assert result.exit_code == 1
+    assert "reading is not checked in on 2026-09-10" in result.stderr
+
+
 def test_summary_counts_check_ins_in_the_chosen_month() -> None:
     runner.invoke(app, ["add", "reading"])
     runner.invoke(app, ["done", "reading", "--date", "2026-09-10"])

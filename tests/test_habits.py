@@ -11,6 +11,7 @@ from habit_tracker.habits import (
     InvalidDateError,
     InvalidDaysPerWeekError,
     MonthlySummary,
+    NotCheckedInError,
     UnknownHabitError,
     add_habit,
     check_in,
@@ -28,6 +29,7 @@ from habit_tracker.habits import (
     monthly_summary,
     parse_day,
     parse_month,
+    undo_check_in,
 )
 
 TODAY = date(2026, 10, 9)
@@ -241,6 +243,37 @@ def test_checking_in_a_future_day_raises_future_check_in_error(habits: list[Habi
 def test_checking_in_a_habit_nobody_added_raises_unknown_habit_error(habits: list[Habit]) -> None:
     with pytest.raises(UnknownHabitError, match="no habit called 'juggling'"):
         check_in(habits, "juggling", TODAY, TODAY)
+
+
+def test_undoing_a_check_in_removes_only_that_day(habits: list[Habit]) -> None:
+    earlier = date(2026, 10, 7)
+    checked_in = check_in(check_in(habits, "reading", earlier, TODAY), "reading", TODAY, TODAY)
+
+    undone = undo_check_in(checked_in, "Reading", earlier)
+
+    assert find_habit(undone, "reading").check_ins == [TODAY]
+
+
+def test_undoing_a_check_in_leaves_other_habits_alone(habits: list[Habit]) -> None:
+    both = check_in(check_in(habits, "reading", TODAY, TODAY), "running", TODAY, TODAY)
+
+    undone = undo_check_in(both, "reading", TODAY)
+
+    assert find_habit(undone, "running").check_ins == [TODAY]
+
+
+def test_undoing_a_day_that_was_never_checked_in_raises_not_checked_in_error(
+    habits: list[Habit],
+) -> None:
+    with pytest.raises(NotCheckedInError, match="reading is not checked in on 2026-10-09"):
+        undo_check_in(habits, "reading", TODAY)
+
+
+def test_undoing_a_check_in_of_a_habit_nobody_added_raises_unknown_habit_error(
+    habits: list[Habit],
+) -> None:
+    with pytest.raises(UnknownHabitError, match="no habit called 'juggling'"):
+        undo_check_in(habits, "juggling", TODAY)
 
 
 def test_parse_day_reads_a_good_date() -> None:

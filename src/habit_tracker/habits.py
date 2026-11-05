@@ -39,6 +39,10 @@ class AlreadyCheckedInError(HabitError):
     pass
 
 
+class NotCheckedInError(HabitError):
+    pass
+
+
 class InvalidDaysPerWeekError(HabitError):
     pass
 
@@ -154,6 +158,14 @@ def check_in(habits: list[Habit], name: str, day: date, today: date) -> list[Hab
         )
     checked_in = replace(habit, check_ins=sorted([*habit.check_ins, day]))
     return [checked_in if other is habit else other for other in habits]
+
+
+def undo_check_in(habits: list[Habit], name: str, day: date) -> list[Habit]:
+    habit = find_habit(habits, name)
+    if day not in habit.check_ins:
+        raise NotCheckedInError(f"{habit.name} is not checked in on {day.strftime(DAY_FORMAT)}")
+    undone = replace(habit, check_ins=[other for other in habit.check_ins if other != day])
+    return [undone if other is habit else other for other in habits]
 
 
 def start_of_week(day: date) -> date:

@@ -21,6 +21,7 @@ from habit_tracker.habits import (
     monthly_summary,
     parse_day,
     parse_month,
+    undo_check_in,
 )
 from habit_tracker.history import format_history
 from habit_tracker.storage import data_file, load_habits, save_habits
@@ -73,6 +74,20 @@ def done(
         habits = check_in(load_habits(path), habit, day, today)
         save_habits(path, habits)
         typer.echo(f"Checked in {find_habit(habits, habit).name} on {day.isoformat()}")
+
+
+@app.command()
+def undo(
+    habit: str,
+    day_text: Annotated[str | None, typer.Option("--date", help="Day as YYYY-MM-DD.")] = None,
+) -> None:
+    """Remove a check-in made by mistake, for today or an earlier day."""
+    with reporting_errors():
+        day = parse_day(day_text) if day_text is not None else date.today()
+        path = data_file()
+        habits = undo_check_in(load_habits(path), habit, day)
+        save_habits(path, habits)
+        typer.echo(f"Removed the check-in of {find_habit(habits, habit).name} on {day.isoformat()}")
 
 
 @app.command()
