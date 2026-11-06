@@ -144,6 +144,11 @@ def add_habit(habits: list[Habit], name: str, days_per_week: int) -> list[Habit]
     return [*habits, Habit(name=name, days_per_week=days_per_week)]
 
 
+def delete_habit(habits: list[Habit], name: str) -> list[Habit]:
+    habit = find_habit(habits, name)
+    return [other for other in habits if other is not habit]
+
+
 def check_in(habits: list[Habit], name: str, day: date, today: date) -> list[Habit]:
     habit = find_habit(habits, name)
     if day > today:
