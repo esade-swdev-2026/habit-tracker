@@ -143,7 +143,7 @@ unset HABIT_TRACKER_FILE
 | Command | What it does | Arguments and options |
 |---|---|---|
 | `add` | Adds a new habit with a weekly goal. | Required: `habit`. Optional: `--days` (integer from 1 to 7, default 7). |
-| `delete` | Deletes a habit and all its completed days. This cannot be undone. | Required: `habit`. |
+| `delete` | Deletes a habit and all its completed days. This cannot be undone, so it asks for confirmation first. | Required: `habit`. Optional: `--yes` / `-y` (skip the confirmation). |
 | `done` | Records a completed day for a habit. | Required: `habit`. Optional: `--date YYYY-MM-DD` (default: today). |
 | `streak` | Shows the current and longest streak. | Required: `habit`. |
 | `summary` | Shows completed days and completion percentage for a month. | Required: `habit`. Optional: `--month YYYY-MM` (default: current month). |
@@ -281,6 +281,6 @@ The last fixes before the partial submission (habit names in the data file are c
 
 For issue #4, ChatGPT (OpenAI) was used to understand the documentation requirements, structure and draft the README, explain the Git workflow, and help review the documentation. The CLI commands and their outputs were tested manually.
 
-For Checkpoint 4, the `delete` command (`delete_habit` in `habits.py`, the command in `cli.py`, their tests and the README lines about it) was written by Claude Code, then reviewed and committed by Can.
+For Checkpoint 4, the `delete` command (`delete_habit` in `habits.py`, the command in `cli.py`, their tests and the README lines about it) was written by Claude Code, then reviewed and committed by Can. The confirmation prompt and `--yes` option, added after the partner group's review, were also written by Claude Code.
 
 For Checkpoint 3, the `history` command (`history.py`, `test_history.py`, the command in `cli.py`, its tests in `test_cli.py` and the README lines about it) was written by Claude Code from the backlog item, then reviewed and committed by Can.

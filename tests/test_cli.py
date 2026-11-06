@@ -52,10 +52,27 @@ def test_delete_removes_the_habit_from_the_list() -> None:
     runner.invoke(app, ["add", "reading", "--days", "3"])
     runner.invoke(app, ["add", "running", "--days", "2"])
     runner.invoke(app, ["done", "reading", "--date", "2026-09-10"])
-    result = runner.invoke(app, ["delete", "Reading"])
+    result = runner.invoke(app, ["delete", "Reading", "--yes"])
     assert result.exit_code == 0
     assert result.stdout == "Deleted reading, which was done on 1 day\n"
     assert runner.invoke(app, ["list"]).stdout == "running: 2 days per week\n"
+
+
+def test_delete_asks_first_and_deletes_on_yes() -> None:
+    runner.invoke(app, ["add", "reading"])
+    result = runner.invoke(app, ["delete", "reading"], input="y\n")
+    assert result.exit_code == 0
+    assert "Delete reading and all its check-ins? This cannot be undone." in result.stdout
+    assert "Deleted reading" in result.stdout
+    assert runner.invoke(app, ["list"]).stdout.startswith("No habits yet")
+
+
+def test_delete_keeps_the_habit_when_the_answer_is_no() -> None:
+    runner.invoke(app, ["add", "reading", "--days", "3"])
+    result = runner.invoke(app, ["delete", "reading"], input="n\n")
+    assert result.exit_code == 1
+    assert "Deleted" not in result.stdout
+    assert runner.invoke(app, ["list"]).stdout == "reading: 3 days per week\n"
 
 
 def test_delete_rejects_an_unknown_habit() -> None:

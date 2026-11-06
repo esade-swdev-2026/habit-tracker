@@ -63,12 +63,19 @@ def add(habit: str, days: int = MAX_DAYS_PER_WEEK) -> None:
 
 
 @app.command()
-def delete(habit: str) -> None:
+def delete(
+    habit: str,
+    yes: Annotated[bool, typer.Option("--yes", "-y", help="Delete without asking first.")] = False,
+) -> None:
     """Delete a habit and every day it was checked in."""
     with reporting_errors():
         path = data_file()
         habits = load_habits(path)
         found = find_habit(habits, habit)
+        if not yes:
+            typer.confirm(
+                f"Delete {found.name} and all its check-ins? This cannot be undone.", abort=True
+            )
         save_habits(path, delete_habit(habits, habit))
         done_on = format_day_count(len(found.check_ins))
         typer.echo(f"Deleted {found.name}, which was done on {done_on}")
