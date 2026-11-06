@@ -145,6 +145,7 @@ unset HABIT_TRACKER_FILE
 | `add` | Adds a new habit with a weekly goal. | Required: `habit`. Optional: `--days` (integer from 1 to 7, default 7). |
 | `delete` | Deletes a habit and all its completed days. This cannot be undone, so it asks for confirmation first. | Required: `habit`. Optional: `--yes` / `-y` (skip the confirmation). |
 | `done` | Records a completed day for a habit. | Required: `habit`. Optional: `--date YYYY-MM-DD` (default: today). |
+| `undo` | Removes a completed day recorded by mistake. | Required: `habit`. Optional: `--date YYYY-MM-DD` (default: today). |
 | `streak` | Shows the current and longest streak. | Required: `habit`. |
 | `summary` | Shows completed days and completion percentage for a month. | Required: `habit`. Optional: `--month YYYY-MM` (default: current month). |
 | `week` | Shows how many days this week the habit was done, against its weekly goal. | Required: `habit`. |
@@ -159,6 +160,7 @@ To see the arguments and options of a specific command, use `--help`:
 uv run habit-tracker add --help
 uv run habit-tracker delete --help
 uv run habit-tracker done --help
+uv run habit-tracker undo --help
 uv run habit-tracker streak --help
 uv run habit-tracker summary --help
 uv run habit-tracker week --help
@@ -200,7 +202,7 @@ days must be between 1 and 7
 
 The command exits with status code `1`.
 
-The same happens for every other kind of bad input: a blank habit name, a habit that already exists, a habit that was never added, a day that is already checked in, a date or month written in the wrong format, a date in the future, and a data file that is not a valid habit file. Each one prints a one-line message and exits with code `1`, without a traceback.
+The same happens for every other kind of bad input: a blank habit name, a habit that already exists, a habit that was never added, a day that is already checked in, undoing a day that was never checked in, a date or month written in the wrong format, a date in the future, and a data file that is not a valid habit file. Each one prints a one-line message and exits with code `1`, without a traceback.
 
 ## Where habits are stored
 
@@ -220,7 +222,7 @@ export HABIT_TRACKER_FILE="$(mktemp -d)/habits.json"
 
 This creates a separate temporary location for testing.
 
-- `add` and `done` save data to the JSON file.
+- `add`, `done` and `undo` save data to the JSON file.
 - `list`, `streak`, `summary`, `week` and `history` read the saved data.
 - `delete` removes a habit and its completed days from the file.
 
@@ -284,3 +286,5 @@ For issue #4, ChatGPT (OpenAI) was used to understand the documentation requirem
 For Checkpoint 4, the `delete` command (`delete_habit` in `habits.py`, the command in `cli.py`, their tests and the README lines about it) was written by Claude Code, then reviewed and committed by Can. The confirmation prompt and `--yes` option, added after the partner group's review, were also written by Claude Code.
 
 For Checkpoint 3, the `history` command (`history.py`, `test_history.py`, the command in `cli.py`, its tests in `test_cli.py` and the README lines about it) was written by Claude Code from the backlog item, then reviewed and committed by Can.
+
+For Checkpoint 4, the `undo` command (`undo_check_in` in `habits.py`, the command in `cli.py`, their tests and the README lines about it) was written by Claude Code, then reviewed and committed by Can.
