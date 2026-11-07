@@ -9,6 +9,7 @@ from habit_tracker.habits import (
     MAX_DAYS_PER_WEEK,
     HabitError,
     add_habit,
+    change_weekly_target,
     check_in,
     current_streak,
     days_done_this_week,
@@ -157,3 +158,13 @@ def list_habits() -> None:
         habits = load_habits(data_file())
         lines = [format_habit(habit) for habit in habits] or [NO_HABITS_MESSAGE]
         typer.echo("\n".join(lines))
+
+
+@app.command()
+def target(habit: str, days: int) -> None:
+    """Change a habit's weekly target."""
+    with reporting_errors():
+        path = data_file()
+        habits = change_weekly_target(load_habits(path), habit, days)
+        save_habits(path, habits)
+        typer.echo(f"Updated {format_habit(find_habit(habits, habit))}")

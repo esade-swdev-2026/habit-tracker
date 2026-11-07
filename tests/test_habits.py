@@ -14,6 +14,7 @@ from habit_tracker.habits import (
     NotCheckedInError,
     UnknownHabitError,
     add_habit,
+    change_weekly_target,
     check_in,
     completion_rate,
     current_streak,
@@ -392,3 +393,29 @@ def test_two_habits_whose_names_differ_only_in_case_or_spaces_are_duplicates(
     habits: list[Habit], name: str
 ) -> None:
     assert has_duplicate_names([*habits, Habit(name, 5)])
+
+
+def test_change_weekly_target_keeps_check_ins() -> None:
+    check_ins = [date(2026, 10, 1), date(2026, 10, 2)]
+    habits = [Habit(name="reading", days_per_week=3, check_ins=check_ins)]
+
+    updated = change_weekly_target(habits, "reading", 5)
+
+    assert updated[0].days_per_week == 5
+    assert updated[0].check_ins == check_ins
+    assert updated[0].name == "reading"
+
+
+@pytest.mark.parametrize("days", [0, 8])
+def test_change_weekly_target_rejects_invalid_days(days: int) -> None:
+    habits = [Habit(name="reading", days_per_week=3)]
+
+    with pytest.raises(InvalidDaysPerWeekError):
+        change_weekly_target(habits, "reading", days)
+
+
+def test_change_weekly_target_rejects_unknown_habit() -> None:
+    habits = [Habit(name="reading", days_per_week=3)]
+
+    with pytest.raises(UnknownHabitError):
+        change_weekly_target(habits, "gym", 5)
