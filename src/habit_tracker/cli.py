@@ -168,4 +168,3 @@ def target(habit: str, days: int) -> None:
         habits = change_weekly_target(load_habits(path), habit, days)
         save_habits(path, habits)
         typer.echo(f"Updated {format_habit(find_habit(habits, habit))}")
-

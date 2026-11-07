@@ -147,9 +147,8 @@ def add_habit(habits: list[Habit], name: str, days_per_week: int) -> list[Habit]
         raise DuplicateHabitError(f"habit '{name}' already exists")
     return [*habits, Habit(name=name, days_per_week=days_per_week)]
 
-def change_weekly_target(
-    habits: list[Habit], name: str, days_per_week: int
-) -> list[Habit]:
+
+def change_weekly_target(habits: list[Habit], name: str, days_per_week: int) -> list[Habit]:
     habit = find_habit(habits, name)
 
     if not is_valid_days_per_week(days_per_week):
@@ -160,6 +159,7 @@ def change_weekly_target(
     updated = replace(habit, days_per_week=days_per_week)
 
     return [updated if other is habit else other for other in habits]
+
 
 def delete_habit(habits: list[Habit], name: str) -> list[Habit]:
     habit = find_habit(habits, name)
