@@ -31,6 +31,7 @@ from habit_tracker.habits import (
     monthly_summary,
     parse_day,
     parse_month,
+    rename_habit,
     undo_check_in,
 )
 
@@ -419,3 +420,35 @@ def test_change_weekly_target_rejects_unknown_habit() -> None:
 
     with pytest.raises(UnknownHabitError):
         change_weekly_target(habits, "gym", 5)
+
+
+def test_rename_habit_keeps_goal_and_check_ins(check_ins: list[date]) -> None:
+    habits = [
+        Habit("reading", 3, check_ins),
+        Habit("running", 1),
+    ]
+
+    updated = rename_habit(habits, "reading", "read 20 pages")
+
+    assert updated == [
+        Habit("read 20 pages", 3, check_ins),
+        Habit("running", 1),
+    ]
+    assert habits[0].name == "reading"
+
+
+@pytest.mark.parametrize("new_name", ["", "   ", "\t"])
+def test_rename_habit_rejects_blank_name(habits: list[Habit], new_name: str) -> None:
+    with pytest.raises(BlankNameError, match="habit name cannot be blank"):
+        rename_habit(habits, "reading", new_name)
+
+
+@pytest.mark.parametrize("new_name", ["running", "RUNNING", "  running  "])
+def test_rename_habit_rejects_duplicate_name(habits: list[Habit], new_name: str) -> None:
+    with pytest.raises(DuplicateHabitError):
+        rename_habit(habits, "reading", new_name)
+
+
+def test_rename_habit_rejects_unknown_habit(habits: list[Habit]) -> None:
+    with pytest.raises(UnknownHabitError, match="no habit called 'juggling'"):
+        rename_habit(habits, "juggling", "read 20 pages")
