@@ -148,6 +148,18 @@ def add_habit(habits: list[Habit], name: str, days_per_week: int) -> list[Habit]
     return [*habits, Habit(name=name, days_per_week=days_per_week)]
 
 
+def rename_habit(habits: list[Habit], old_name: str, new_name: str) -> list[Habit]:
+    habit = find_habit(habits, old_name)
+    new_name = clean_name(new_name)
+
+    if any(same_name(other.name, new_name) for other in habits if other is not habit):
+        raise DuplicateHabitError(f"habit '{new_name}' already exists")
+
+    renamed = replace(habit, name=new_name)
+
+    return [renamed if other is habit else other for other in habits]
+
+
 def change_weekly_target(habits: list[Habit], name: str, days_per_week: int) -> list[Habit]:
     habit = find_habit(habits, name)
 

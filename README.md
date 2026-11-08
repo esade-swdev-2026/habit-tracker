@@ -144,6 +144,7 @@ unset HABIT_TRACKER_FILE
 |---|---|---|
 | `add` | Adds a new habit with a weekly goal. | Required: `habit`. Optional: `--days` (integer from 1 to 7, default 7). |
 | `delete` | Deletes a habit and all its completed days. This cannot be undone, so it asks for confirmation first. | Required: `habit`. Optional: `--yes` / `-y` (skip the confirmation). |
+| `rename` | Renames an existing habit without losing its weekly goal or check-ins. | Required: `old_name`, `new_name`. |
 | `done` | Records a completed day for a habit. | Required: `habit`. Optional: `--date YYYY-MM-DD` (default: today). |
 | `undo` | Removes a completed day recorded by mistake. | Required: `habit`. Optional: `--date YYYY-MM-DD` (default: today). |
 | `streak` | Shows the current and longest streak. | Required: `habit`. |
@@ -222,7 +223,7 @@ export HABIT_TRACKER_FILE="$(mktemp -d)/habits.json"
 
 This creates a separate temporary location for testing.
 
-- `add`, `done` and `undo` save data to the JSON file.
+- `add`, `done`, `undo` and `rename` save data to the JSON file.
 - `list`, `streak`, `summary`, `week` and `history` read the saved data.
 - `delete` removes a habit and its completed days from the file.
 
@@ -288,3 +289,5 @@ For Checkpoint 4, the `delete` command (`delete_habit` in `habits.py`, the comma
 For Checkpoint 3, the `history` command (`history.py`, `test_history.py`, the command in `cli.py`, its tests in `test_cli.py` and the README lines about it) was written by Claude Code from the backlog item, then reviewed and committed by Can.
 
 For Checkpoint 4, the `undo` command (`undo_check_in` in `habits.py`, the command in `cli.py`, their tests and the README lines about it) was written by Claude Code, then reviewed and committed by Can.
+
+For the `rename` command, I (Daniel) used ChatGPT to understand the requirements and help draft the implementation in `habits.py` and `cli.py`, the tests in `test_habits.py` and `test_cli.py`, and the README updates. I reviewed and integrated the changes by running Pytest, Ruff and Mypy to verify them. 

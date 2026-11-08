@@ -190,3 +190,48 @@ def test_history_rejects_an_unknown_habit() -> None:
     result = runner.invoke(app, ["history", "juggling"])
     assert result.exit_code == 1
     assert "no habit called 'juggling'" in result.stderr
+
+
+def test_rename_preserves_goal_and_check_ins() -> None:
+    runner.invoke(app, ["add", "reading", "--days", "3"])
+    runner.invoke(app, ["done", "reading", "--date", "2026-09-10"])
+
+    result = runner.invoke(app, ["rename", "reading", "read 20 pages"])
+
+    assert result.exit_code == 0
+    assert result.stdout == "Renamed reading to read 20 pages\n"
+
+    habits_list = runner.invoke(app, ["list"])
+    assert habits_list.stdout == "read 20 pages: 3 days per week\n"
+
+    history = runner.invoke(app, ["history", "read 20 pages"])
+    assert history.exit_code == 0
+    assert "2026-09-10" in history.stdout
+
+
+def test_rename_rejects_blank_name() -> None:
+    runner.invoke(app, ["add", "reading"])
+
+    result = runner.invoke(app, ["rename", "reading", "   "])
+
+    assert result.exit_code == 1
+    assert "habit name cannot be blank" in result.stderr
+    assert "reading" in runner.invoke(app, ["list"]).stdout
+
+
+def test_rename_rejects_duplicate_name() -> None:
+    runner.invoke(app, ["add", "reading"])
+    runner.invoke(app, ["add", "running"])
+
+    result = runner.invoke(app, ["rename", "reading", "running"])
+
+    assert result.exit_code == 1
+    assert "habit 'running' already exists" in result.stderr
+    assert "reading" in runner.invoke(app, ["list"]).stdout
+
+
+def test_rename_rejects_unknown_habit() -> None:
+    result = runner.invoke(app, ["rename", "juggling", "read 20 pages"])
+
+    assert result.exit_code == 1
+    assert "no habit called 'juggling'" in result.stderr

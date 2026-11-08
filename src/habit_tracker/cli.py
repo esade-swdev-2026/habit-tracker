@@ -24,6 +24,7 @@ from habit_tracker.habits import (
     monthly_summary,
     parse_day,
     parse_month,
+    rename_habit,
     undo_check_in,
 )
 from habit_tracker.history import format_history
@@ -81,6 +82,22 @@ def delete(
         save_habits(path, delete_habit(habits, habit))
         done_on = format_day_count(len(found.check_ins))
         typer.echo(f"Deleted {found.name}, which was done on {done_on}")
+
+
+@app.command()
+def rename(old_name: str, new_name: str) -> None:
+    """Rename a habit without losing its weekly goal or check-ins."""
+    with reporting_errors():
+        path = data_file()
+        habits = load_habits(path)
+
+        original = find_habit(habits, old_name)
+        updated = rename_habit(habits, old_name, new_name)
+
+        save_habits(path, updated)
+
+        renamed = find_habit(updated, new_name)
+        typer.echo(f"Renamed {original.name} to {renamed.name}")
 
 
 @app.command()
