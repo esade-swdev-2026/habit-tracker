@@ -45,3 +45,9 @@ jobs:
 
       - name: Tests
         run: uv run pytest
+
+      - name: Build the image
+        run: docker build -t habit-tracker .
+
+      - name: Run the image
+        run: docker run --rm habit-tracker --help
