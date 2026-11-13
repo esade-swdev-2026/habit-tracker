@@ -170,6 +170,40 @@ uv run habit-tracker list --help
 ```
 
 
+## Run with Docker
+
+If you have Docker, you can run Habit Tracker without installing Python or uv. From the project folder, build the image once:
+
+```bash
+docker build -t habit-tracker .
+```
+
+Then use `docker run --rm habit-tracker` in place of `uv run habit-tracker`:
+
+```bash
+docker run --rm habit-tracker --help
+docker run --rm -v habit-tracker-data:/app/data habit-tracker add reading --days 3
+docker run --rm -v habit-tracker-data:/app/data habit-tracker done reading
+docker run --rm -v habit-tracker-data:/app/data habit-tracker list
+```
+
+The last command prints:
+
+```text
+reading: 3 days per week
+```
+
+Each `docker run --rm` starts a new container and deletes it when the command ends. The habits are still there because they are not saved inside the container: inside the image, `HABIT_TRACKER_FILE` is set to `/app/data/habits.json`, and `-v habit-tracker-data:/app/data` keeps that folder in a Docker named volume called `habit-tracker-data`. Without the `-v` option, every command starts with no habits.
+
+To delete the saved habits and start over:
+
+```bash
+docker volume rm habit-tracker-data
+```
+
+The app runs inside the container as a normal user called `app`, not as root.
+
+
 ## What a streak is
 
 A streak is the number of consecutive calendar days on which a habit has been completed.
@@ -290,4 +324,6 @@ For Checkpoint 3, the `history` command (`history.py`, `test_history.py`, the co
 
 For Checkpoint 4, the `undo` command (`undo_check_in` in `habits.py`, the command in `cli.py`, their tests and the README lines about it) was written by Claude Code, then reviewed and committed by Can.
 
-For the `rename` command, I (Daniel) used ChatGPT to understand the requirements and help draft the implementation in `habits.py` and `cli.py`, the tests in `test_habits.py` and `test_cli.py`, and the README updates. I reviewed and integrated the changes by running Pytest, Ruff and Mypy to verify them. 
+For the `rename` command, I (Daniel) used ChatGPT to understand the requirements and help draft the implementation in `habits.py` and `cli.py`, the tests in `test_habits.py` and `test_cli.py`, and the README updates. I reviewed and integrated the changes by running Pytest, Ruff and Mypy to verify them.
+
+For Session 16, the Docker setup (the `Dockerfile` changes, `.dockerignore`, the two image steps in `.github/workflows/check.yml` and the "Run with Docker" section of this README) was written and tested by Claude Code following lab 16, then reviewed and committed by Can.
