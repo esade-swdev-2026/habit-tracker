@@ -7,3 +7,10 @@ __pycache__/
 .pytest_cache/
 data/
 habits.json
+
+# Secrets: never commit or bake into the image
+.env
+.env.*
+*.pem
+*.key
+*.p12
