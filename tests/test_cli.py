@@ -235,3 +235,33 @@ def test_rename_rejects_unknown_habit() -> None:
 
     assert result.exit_code == 1
     assert "no habit called 'juggling'" in result.stderr
+
+
+def test_target_changes_the_weekly_goal_and_keeps_check_ins() -> None:
+    runner.invoke(app, ["add", "reading", "--days", "3"])
+    runner.invoke(app, ["done", "reading", "--date", "2026-09-10"])
+
+    result = runner.invoke(app, ["target", "Reading", "5"])
+
+    assert result.exit_code == 0
+    assert result.stdout == "Updated reading: 5 days per week\n"
+    assert runner.invoke(app, ["list"]).stdout == "reading: 5 days per week\n"
+    assert "2026-09-10" in runner.invoke(app, ["history", "reading"]).stdout
+
+
+@pytest.mark.parametrize("days", ["0", "8"])
+def test_target_rejects_days_outside_one_to_seven(days: str) -> None:
+    runner.invoke(app, ["add", "reading", "--days", "3"])
+
+    result = runner.invoke(app, ["target", "reading", days])
+
+    assert result.exit_code == 1
+    assert "days must be between 1 and 7" in result.stderr
+    assert runner.invoke(app, ["list"]).stdout == "reading: 3 days per week\n"
+
+
+def test_target_rejects_an_unknown_habit() -> None:
+    result = runner.invoke(app, ["target", "juggling", "5"])
+
+    assert result.exit_code == 1
+    assert "no habit called 'juggling'" in result.stderr
