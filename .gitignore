@@ -10,3 +10,10 @@ build/
 .coverage
 .DS_Store
 habits.json
+
+# Secrets: never commit or bake into the image
+.env
+.env.*
+*.pem
+*.key
+*.p12
