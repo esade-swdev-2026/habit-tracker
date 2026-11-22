@@ -265,3 +265,99 @@ def test_target_rejects_an_unknown_habit() -> None:
 
     assert result.exit_code == 1
     assert "no habit called 'juggling'" in result.stderr
+
+
+def test_interactive_adds_a_habit_and_checks_it_in_by_number() -> None:
+    answers = ["7", "reading", "3", "1", "1", "2026-09-10", "q"]
+
+    result = runner.invoke(app, ["interactive"], input="\n".join(answers) + "\n")
+
+    assert result.exit_code == 0
+    assert "Added reading: 3 days per week" in result.stdout
+    assert "Checked in reading on 2026-09-10" in result.stdout
+    assert runner.invoke(app, ["history", "reading"]).stdout == (
+        "reading: done on 1 day\n2026-09-10\n"
+    )
+
+
+def test_interactive_runs_every_other_command_from_the_menu() -> None:
+    runner.invoke(app, ["add", "reading", "--days", "3"])
+    runner.invoke(app, ["done", "reading", "--date", "2026-09-10"])
+    answers = [
+        *["3", "reading"],
+        *["4", "1"],
+        *["5", "1", "2026-09"],
+        *["6", "1"],
+        *["9", "1", "5"],
+        *["8", "1", "books"],
+        *["2", "books", "2026-09-10"],
+        *["10", "1", "y"],
+        "q",
+    ]
+
+    result = runner.invoke(app, ["interactive"], input="\n".join(answers) + "\n")
+
+    assert result.exit_code == 0
+    assert "longest streak: 1 day" in result.stdout
+    assert "reading: 0 of 3 days this week" in result.stdout
+    assert "1 of 30 days done" in result.stdout
+    assert "reading: done on 1 day" in result.stdout
+    assert "Updated reading: 5 days per week" in result.stdout
+    assert "Renamed reading to books" in result.stdout
+    assert "Removed the check-in of books on 2026-09-10" in result.stdout
+    assert "Deleted books, which was done on 0 days" in result.stdout
+    assert runner.invoke(app, ["list"]).stdout.startswith("No habits yet")
+
+
+def test_interactive_carries_on_after_bad_input() -> None:
+    runner.invoke(app, ["add", "reading", "--days", "3"])
+    answers = ["1", "juggling", "", "9", "1", "8", "1", "1", "2026-09-10", "q"]
+
+    result = runner.invoke(app, ["interactive"], input="\n".join(answers) + "\n")
+
+    assert result.exit_code == 0
+    assert "no habit called 'juggling'" in result.stderr
+    assert "days must be between 1 and 7" in result.stderr
+    assert "Checked in reading on 2026-09-10" in result.stdout
+    assert runner.invoke(app, ["list"]).stdout == "reading: 3 days per week\n"
+
+
+def test_interactive_keeps_the_habit_when_delete_is_not_confirmed() -> None:
+    runner.invoke(app, ["add", "reading", "--days", "3"])
+
+    result = runner.invoke(app, ["interactive"], input="10\n1\nn\nq\n")
+
+    assert result.exit_code == 0
+    assert "Cancelled." in result.stdout
+    assert runner.invoke(app, ["list"]).stdout == "reading: 3 days per week\n"
+
+
+def test_interactive_asks_for_a_habit_first_when_there_are_none() -> None:
+    result = runner.invoke(app, ["interactive"], input="1\nq\n")
+
+    assert result.exit_code == 0
+    assert "No habits yet. Choose 7 to add one." in result.stdout
+    assert "There are no habits yet, so add one first." in result.stdout
+
+
+def test_interactive_explains_an_unknown_choice() -> None:
+    result = runner.invoke(app, ["interactive"], input="banana\nq\n")
+
+    assert result.exit_code == 0
+    assert "Type one of the numbers above, or q to quit." in result.stdout
+
+
+def test_interactive_ends_quietly_when_the_input_ends() -> None:
+    result = runner.invoke(app, ["interactive"], input="")
+
+    assert result.exit_code == 0
+    assert " q  Quit" in result.stdout
+
+
+def test_interactive_stops_on_a_data_file_that_is_not_valid(data_path: Path) -> None:
+    data_path.write_text("{bad", encoding="utf-8")
+
+    result = runner.invoke(app, ["interactive"], input="q\n")
+
+    assert result.exit_code == 1
+    assert "is not a valid habit file" in result.stderr

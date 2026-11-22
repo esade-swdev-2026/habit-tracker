@@ -171,6 +171,37 @@ After testing, you can return to the default storage location:
 unset HABIT_TRACKER_FILE
 ```
 
+### Interactive mode
+
+If you would rather choose from a menu than type each command, start the interactive mode:
+
+```bash
+uv run habit-tracker interactive
+```
+
+It first shows your habits (whether each one is done today, this week against its goal, and the current streak) and then a menu. With one habit called `reading`, on November 22, 2026, it looked like this:
+
+```text
+Habit Tracker: Sunday 2026-11-22
+#  Habit    Today    This week  Streak
+1  reading  not yet  0 of 3     0 days
+
+ 1  Check in a habit
+ 2  Undo a check-in
+ 3  Show a streak
+ 4  Show this week against the goal
+ 5  Show a monthly summary
+ 6  Show every day a habit was done
+ 7  Add a habit
+ 8  Rename a habit
+ 9  Change a weekly goal
+10  Delete a habit
+ q  Quit
+Choice:
+```
+
+Type the number of an action and press Enter. When it asks for a habit, type the habit's number from the table or its name. Each choice runs the same command as in the reference below, with the same messages and the same data file, and then the menu comes back. A wrong answer prints the usual one-line message and returns to the menu instead of ending the program. Type `q` to quit.
+
 ### Command reference
 
 | Command | What it does | Arguments and options |
@@ -186,6 +217,7 @@ unset HABIT_TRACKER_FILE
 | `week` | Shows how many days this week the habit was done, against its weekly goal. | Required: `habit`. |
 | `history` | Lists every day a habit was done, oldest first. | Required: `habit`. |
 | `list` | Lists every habit and its weekly goal. | No arguments required. |
+| `interactive` | Opens a menu from which every command above can be run, until you quit. | No arguments required. |
 
 Habit names ignore capital letters and extra spaces: `Reading`, `reading` and ` reading ` are the same habit. A name with several words needs quotes, for example `uv run habit-tracker add "morning run" --days 2`.
 
@@ -203,6 +235,7 @@ uv run habit-tracker summary --help
 uv run habit-tracker week --help
 uv run habit-tracker history --help
 uv run habit-tracker list --help
+uv run habit-tracker interactive --help
 ```
 
 
@@ -242,6 +275,12 @@ reading: 3 days per week
 ```
 
 Each `docker run --rm` starts a new container and deletes it when the command ends. The habits are still there because they are not saved inside the container: inside the image, `HABIT_TRACKER_FILE` is set to `/app/data/habits.json`, and `-v habit-tracker-data:/app/data` keeps that folder in a Docker named volume called `habit-tracker-data`. Without the `-v` option, every command starts with no habits.
+
+The interactive mode also works in the container. It needs `-it`, which connects your keyboard to the container:
+
+```bash
+docker run --rm -it -v habit-tracker-data:/app/data habit-tracker interactive
+```
 
 To delete the saved habits and start over:
 
@@ -322,6 +361,7 @@ The project separates its logic, storage, and command-line interface into differ
 
 - `src/habit_tracker/habits.py` contains the core habit rules and logic, including check-ins, streak calculations, input validation, and monthly summaries.
 - `src/habit_tracker/history.py` formats the list of days a habit was done, for the `history` command.
+- `src/habit_tracker/menu.py` contains the menu of the interactive mode: the choices, how an answer is matched to a choice or a habit, and the overview table. It only takes and returns plain data.
 - `src/habit_tracker/storage.py` handles reading and writing habit data in the JSON file.
 - `src/habit_tracker/cli.py` defines the terminal commands, displays results and errors, and connects the commands to the habit logic and storage.
 - `src/habit_tracker/__main__.py` provides another entry point for running the Python package.
@@ -381,3 +421,5 @@ For the final submission, the tests of the `target` command in `test_cli.py`, th
 For the final submission, the `release` job in `.github/workflows/check.yml` was copied unchanged from lab 18 (`labs/18-registry-deploy.md`); Claude Code pasted it into the file and Can committed it. The secret patterns (`.env`, `.env.*`, `*.pem`, `*.key`, `*.p12`) added to `.gitignore` and `.dockerignore`, and the "pull the published image" option in "Run with Docker", were written by Claude Code, then reviewed and committed by Can.
 
 For the README example steps 8 and 9 (`history` and `target`), I (Albert) used Claude (claude.ai) for guidance and to draft the wording. I ran the commands myself and copied the real outputs.
+
+For the final submission, the interactive mode (`menu.py`, the `interactive` command in `cli.py`, their tests in `test_menu.py` and `test_cli.py`, and the README lines about it) was written by Claude Code at Can's request, then reviewed and committed by Can.
