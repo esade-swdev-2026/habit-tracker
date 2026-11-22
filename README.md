@@ -130,6 +130,39 @@ reading: 2 of 3 days this week
 
 A week runs from Monday to Sunday. The goal is the number you gave with `--days`.
 
+### 8. See every day you did a habit
+
+```bash
+uv run habit-tracker history reading
+```
+
+On November 22, 2026, the output was:
+
+```text
+reading: done on 2 days
+2026-10-15
+2026-11-22
+```
+
+The days are listed oldest first.
+
+### 9. Change your weekly goal
+
+```bash
+uv run habit-tracker target reading 5
+uv run habit-tracker list
+```
+
+On November 22, 2026, the output was:
+
+```text
+Updated reading: 5 days per week
+reading: 5 days per week
+```
+
+`target` changes the weekly goal you gave with `--days`, and `list` shows the new goal.
+
+
 These results reflect the two completed days recorded in October 2026. Results may differ if the commands are executed on another date.
 
 After testing, you can return to the default storage location:
@@ -339,8 +372,12 @@ For Checkpoint 4, the `undo` command (`undo_check_in` in `habits.py`, the comman
 
 For the `rename` command, I (Daniel) used ChatGPT to understand the requirements and help draft the implementation in `habits.py` and `cli.py`, the tests in `test_habits.py` and `test_cli.py`, and the README updates. I reviewed and integrated the changes by running Pytest, Ruff and Mypy to verify them.
 
+For the `target` command (pull request #17), Adrià used Claude Code to write the command and its tests (`cli.py`, `habits.py` and `test_habits.py`), as he states in his review of pull request #22.
+
 For Session 16, the Docker setup (the `Dockerfile` changes, `.dockerignore`, the two image steps in `.github/workflows/check.yml` and the "Run with Docker" section of this README) was written and tested by Claude Code following lab 16, then reviewed and committed by Can.
 
 For the final submission, the tests of the `target` command in `test_cli.py`, the `rename` and `target` lines in the command reference and this section's heading were written by Claude Code, then reviewed and committed by Can.
 
 For the final submission, the `release` job in `.github/workflows/check.yml` was copied unchanged from lab 18 (`labs/18-registry-deploy.md`); Claude Code pasted it into the file and Can committed it. The secret patterns (`.env`, `.env.*`, `*.pem`, `*.key`, `*.p12`) added to `.gitignore` and `.dockerignore`, and the "pull the published image" option in "Run with Docker", were written by Claude Code, then reviewed and committed by Can.
+
+For the README example steps 8 and 9 (`history` and `target`), I (Albert) used Claude (claude.ai) for guidance and to draft the wording. I ran the commands myself and copied the real outputs.
