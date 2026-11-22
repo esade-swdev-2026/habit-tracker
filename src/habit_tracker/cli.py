@@ -1,4 +1,4 @@
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from datetime import date
 from typing import Annotated, NoReturn
@@ -7,6 +7,7 @@ import typer
 
 from habit_tracker.habits import (
     MAX_DAYS_PER_WEEK,
+    Habit,
     HabitError,
     add_habit,
     change_weekly_target,
@@ -28,11 +29,14 @@ from habit_tracker.habits import (
     undo_check_in,
 )
 from habit_tracker.history import format_history
+from habit_tracker.menu import Action, format_menu, format_overview, parse_choice, pick_habit
 from habit_tracker.storage import data_file, load_habits, save_habits
 
 app = typer.Typer(help="Track your daily habits.", no_args_is_help=True)
 
 NO_HABITS_MESSAGE = "No habits yet. Add one with: habit-tracker add reading --days 3"
+UNKNOWN_CHOICE_MESSAGE = "Type one of the numbers above, or q to quit."
+ADD_A_HABIT_FIRST_MESSAGE = "There are no habits yet, so add one first."
 
 
 def fail(message: str) -> NoReturn:
@@ -185,3 +189,76 @@ def target(habit: str, days: int) -> None:
         habits = change_weekly_target(load_habits(path), habit, days)
         save_habits(path, habits)
         typer.echo(f"Updated {format_habit(find_habit(habits, habit))}")
+
+
+def ask_habit(habits: list[Habit]) -> str:
+    answer: str = typer.prompt("Habit (number or name)")
+    return pick_habit([habit.name for habit in habits], answer)
+
+
+def ask_optional(question: str) -> str | None:
+    answer: str = typer.prompt(question, default="", show_default=False)
+    return answer.strip() or None
+
+
+def ask_days_per_week() -> int:
+    days: int = typer.prompt("Days per week", type=int)
+    return days
+
+
+def ask_and_add(habits: list[Habit]) -> None:
+    name: str = typer.prompt("Name of the new habit")
+    add(name, ask_days_per_week())
+
+
+ASK_AND_RUN: dict[Action, Callable[[list[Habit]], None]] = {
+    Action.CHECK_IN: lambda habits: done(
+        ask_habit(habits), ask_optional("Day as YYYY-MM-DD (Enter for today)")
+    ),
+    Action.UNDO: lambda habits: undo(
+        ask_habit(habits), ask_optional("Day as YYYY-MM-DD (Enter for today)")
+    ),
+    Action.STREAK: lambda habits: streak(ask_habit(habits)),
+    Action.WEEK: lambda habits: week(ask_habit(habits)),
+    Action.SUMMARY: lambda habits: summary(
+        ask_habit(habits), ask_optional("Month as YYYY-MM (Enter for this month)")
+    ),
+    Action.HISTORY: lambda habits: history(ask_habit(habits)),
+    Action.ADD: ask_and_add,
+    Action.RENAME: lambda habits: rename(ask_habit(habits), typer.prompt("New name")),
+    Action.TARGET: lambda habits: target(ask_habit(habits), ask_days_per_week()),
+    Action.DELETE: lambda habits: delete(ask_habit(habits)),
+}
+
+
+def ask_and_run(action: Action, habits: list[Habit]) -> None:
+    if not habits and action is not Action.ADD:
+        typer.echo(ADD_A_HABIT_FIRST_MESSAGE)
+        return
+    try:
+        ASK_AND_RUN[action](habits)
+    except typer.Exit:
+        pass  # the command already said what was wrong; the menu carries on
+    except typer.Abort:
+        typer.echo("Cancelled.")
+
+
+@app.command()
+def interactive() -> None:
+    """Use every command from a menu, without typing them one by one."""
+    while True:
+        with reporting_errors():
+            habits = load_habits(data_file())
+        typer.echo("\n".join(["", *format_overview(habits, date.today()), "", *format_menu()]))
+        try:
+            answer: str = typer.prompt("Choice")
+        except typer.Abort:
+            typer.echo("")
+            return
+        action = parse_choice(answer)
+        if action is Action.QUIT:
+            return
+        if action is None:
+            typer.echo(UNKNOWN_CHOICE_MESSAGE)
+        else:
+            ask_and_run(action, habits)
