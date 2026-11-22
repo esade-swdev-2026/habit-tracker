@@ -178,6 +178,7 @@ unset HABIT_TRACKER_FILE
 | `add` | Adds a new habit with a weekly goal. | Required: `habit`. Optional: `--days` (integer from 1 to 7, default 7). |
 | `delete` | Deletes a habit and all its completed days. This cannot be undone, so it asks for confirmation first. | Required: `habit`. Optional: `--yes` / `-y` (skip the confirmation). |
 | `rename` | Renames an existing habit without losing its weekly goal or check-ins. | Required: `old_name`, `new_name`. |
+| `target` | Changes the weekly goal of an existing habit and keeps its check-ins. | Required: `habit`, `days` (integer from 1 to 7). |
 | `done` | Records a completed day for a habit. | Required: `habit`. Optional: `--date YYYY-MM-DD` (default: today). |
 | `undo` | Removes a completed day recorded by mistake. | Required: `habit`. Optional: `--date YYYY-MM-DD` (default: today). |
 | `streak` | Shows the current and longest streak. | Required: `habit`. |
@@ -193,6 +194,8 @@ To see the arguments and options of a specific command, use `--help`:
 ```bash
 uv run habit-tracker add --help
 uv run habit-tracker delete --help
+uv run habit-tracker rename --help
+uv run habit-tracker target --help
 uv run habit-tracker done --help
 uv run habit-tracker undo --help
 uv run habit-tracker streak --help
@@ -205,7 +208,19 @@ uv run habit-tracker list --help
 
 ## Run with Docker
 
-If you have Docker, you can run Habit Tracker without installing Python or uv. From the project folder, build the image once:
+If you have Docker, you can run Habit Tracker without installing Python or uv. Get the image in one of two ways.
+
+**Option 1: pull the published image.** Every merge to `main` and every version tag (such as `v1.0`) is checked, built and published to the GitHub Container Registry by our CI pipeline (the `release` job in `.github/workflows/check.yml`). The image is private to the course, so log in first with a GitHub personal access token that has the `read:packages` scope (paste the token when asked for a password). You do not need to clone the repository for this:
+
+```bash
+docker login ghcr.io -u <your-github-username>
+docker pull ghcr.io/esade-swdev-2026/habit-tracker:v1.0
+docker tag ghcr.io/esade-swdev-2026/habit-tracker:v1.0 habit-tracker
+```
+
+The last command gives the image the short name `habit-tracker`, so the commands below work as written.
+
+**Option 2: build it yourself.** From the project folder, build the image once:
 
 ```bash
 docker build -t habit-tracker .
@@ -290,7 +305,7 @@ export HABIT_TRACKER_FILE="$(mktemp -d)/habits.json"
 
 This creates a separate temporary location for testing.
 
-- `add`, `done`, `undo` and `rename` save data to the JSON file.
+- `add`, `done`, `undo`, `rename` and `target` save data to the JSON file.
 - `list`, `streak`, `summary`, `week` and `history` read the saved data.
 - `delete` removes a habit and its completed days from the file.
 
@@ -334,14 +349,12 @@ These commands check:
 All four checks should pass before submitting changes.
 
 
-## AI use
+## Use of AI
 
 The `habits.py` module and its tests (Checkpoint 2) were written by hand and then got reviewed by claude code to spot mistakes and then refixed by hand.
 
 
 The breakdown of this submission into four tasks and the task descriptions in the GitHub issues were drafted with Claude Code.
-
-All documented commands and outputs will be verified manually before submission.
 
 For issue #3: The commands in `cli.py` and their tests in `test_cli.py`: I used Claude Code (Anthropic) to implement this issue. I gave it the specification and constraints, and it wrote the code and tests and ran the checks; I reviewed the changes, ran the git steps and opened the pull request.
 
@@ -359,7 +372,12 @@ For Checkpoint 4, the `undo` command (`undo_check_in` in `habits.py`, the comman
 
 For the `rename` command, I (Daniel) used ChatGPT to understand the requirements and help draft the implementation in `habits.py` and `cli.py`, the tests in `test_habits.py` and `test_cli.py`, and the README updates. I reviewed and integrated the changes by running Pytest, Ruff and Mypy to verify them.
 
+For the `target` command (pull request #17), Adrià used Claude Code to write the command and its tests (`cli.py`, `habits.py` and `test_habits.py`), as he states in his review of pull request #22.
+
 For Session 16, the Docker setup (the `Dockerfile` changes, `.dockerignore`, the two image steps in `.github/workflows/check.yml` and the "Run with Docker" section of this README) was written and tested by Claude Code following lab 16, then reviewed and committed by Can.
 
+For the final submission, the tests of the `target` command in `test_cli.py`, the `rename` and `target` lines in the command reference and this section's heading were written by Claude Code, then reviewed and committed by Can.
+
+For the final submission, the `release` job in `.github/workflows/check.yml` was copied unchanged from lab 18 (`labs/18-registry-deploy.md`); Claude Code pasted it into the file and Can committed it. The secret patterns (`.env`, `.env.*`, `*.pem`, `*.key`, `*.p12`) added to `.gitignore` and `.dockerignore`, and the "pull the published image" option in "Run with Docker", were written by Claude Code, then reviewed and committed by Can.
 
 For the README example steps 8 and 9 (`history` and `target`), I (Albert) used Claude (claude.ai) for guidance and to draft the wording. I ran the commands myself and copied the real outputs.
