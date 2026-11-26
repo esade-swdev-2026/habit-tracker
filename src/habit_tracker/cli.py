@@ -1,3 +1,4 @@
+import sys
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from datetime import date
@@ -37,6 +38,9 @@ app = typer.Typer(help="Track your daily habits.", no_args_is_help=True)
 NO_HABITS_MESSAGE = "No habits yet. Add one with: habit-tracker add reading --days 3"
 UNKNOWN_CHOICE_MESSAGE = "Type one of the numbers above, or q to quit."
 ADD_A_HABIT_FIRST_MESSAGE = "There are no habits yet, so add one first."
+DASHBOARD_NEEDS_A_TERMINAL_MESSAGE = (
+    "the dashboard needs a terminal you can type in (with Docker, add -it after docker run)"
+)
 
 
 def fail(message: str) -> NoReturn:
@@ -262,3 +266,16 @@ def interactive() -> None:
             typer.echo(UNKNOWN_CHOICE_MESSAGE)
         else:
             ask_and_run(action, habits)
+
+
+@app.command()
+def dashboard() -> None:
+    """Open a full-screen dashboard: every habit, its week, its streak and a calendar."""
+    if not (sys.stdin.isatty() and sys.stdout.isatty()):
+        fail(DASHBOARD_NEEDS_A_TERMINAL_MESSAGE)
+    with reporting_errors():
+        path = data_file()
+        load_habits(path)
+    from habit_tracker.tui import HabitDashboard
+
+    HabitDashboard(path, date.today()).run()

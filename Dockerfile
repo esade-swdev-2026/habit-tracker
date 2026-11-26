@@ -1,6 +1,7 @@
 FROM python:3.13-slim
 COPY --from=ghcr.io/astral-sh/uv:0.13.5 /uv /bin/uv
 
+ENV UV_COMPILE_BYTECODE=1
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN uv sync --locked --no-dev --no-install-project
@@ -14,5 +15,6 @@ USER app
 
 ENV PATH="/app/.venv/bin:$PATH"
 ENV HABIT_TRACKER_FILE=/app/data/habits.json
+ENV COLORTERM=truecolor
 ENTRYPOINT ["habit-tracker"]
 CMD ["--help"]

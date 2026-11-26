@@ -361,3 +361,14 @@ def test_interactive_stops_on_a_data_file_that_is_not_valid(data_path: Path) -> 
 
     assert result.exit_code == 1
     assert "is not a valid habit file" in result.stderr
+
+
+def test_dashboard_needs_a_terminal_to_type_in() -> None:
+    result = runner.invoke(app, ["dashboard"])
+    assert result.exit_code == 1
+    assert "the dashboard needs a terminal you can type in" in result.stderr
+
+
+def test_dashboard_is_listed_with_the_other_commands() -> None:
+    result = runner.invoke(app, ["--help"])
+    assert "dashboard" in result.stdout

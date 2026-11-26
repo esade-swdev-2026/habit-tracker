@@ -202,6 +202,60 @@ Choice:
 
 Type the number of an action and press Enter. When it asks for a habit, type the habit's number from the table or its name. Each choice runs the same command as in the reference below, with the same messages and the same data file, and then the menu comes back. A wrong answer prints the usual one-line message and returns to the menu instead of ending the program. Type `q` to quit.
 
+### Dashboard
+
+For a full-screen view of all your habits, open the dashboard:
+
+```bash
+uv run habit-tracker dashboard
+```
+
+The left side lists every habit: whether it is done today, this week against its goal, and the current streak. The right side shows the habit under the cursor: its week, its streaks and a calendar of the month with the days it was done. With four habits, on November 25, 2026, it looked like this (in the terminal, the days a habit was done are green in the calendar):
+
+```text
+                     Habit Tracker — Wednesday 2026-11-25
+╭─ Habits ───────────────────────────────────────╮╭─ reading ──────────────────╮
+│ Habit            Today    This week    Streak  ││                            │
+│ reading          ✓ done   ■■■ 3/3      3 days  ││  3 of 3 days this week     │
+│ morning run      not yet  ■□ 1/2       1 day   ││  goal reached              │
+│ spanish          not yet  ■■□□□ 2/5    9 days  ││  3 days in a row           │
+│ no phone in bed  ✓ done   ■□□□□□□ 1/7  1 day   ││  longest streak: 3 days    │
+│                                                ││                            │
+│                                                ││  November 2026             │
+│                                                ││  11 of 30 days done        │
+│                                                ││  37% complete              │
+│                                                ││                            │
+│                                                ││  Mo Tu We Th Fr Sa Su      │
+│                                                ││                     1      │
+│                                                ││   2  3  4  5  6  7  8      │
+│                                                ││   9 10 11 12 13 14 15      │
+│                                                ││  16 17 18 19 20 21 22      │
+│                                                ││  23 24 25 26 27 28 29      │
+│                                                ││  30                        │
+│                                                ││                            │
+╰────────────────────────────────────────────────╯╰────────────────────────────╯
+space Today c Check in u Undo a Add r Rename g Goal d Delete t Theme q Quit
+```
+
+Move between habits with the up and down arrow keys. Every key acts on the habit under the cursor:
+
+| Key | What it does |
+|---|---|
+| `space` | Checks in the habit for today, or removes today's check-in if it is already done. |
+| `c` | Checks in another day: it asks for the day as `YYYY-MM-DD`. |
+| `u` | Removes the check-in of another day. |
+| `a` | Adds a habit: it asks for the name, then for the days per week. |
+| `r` | Renames the habit. |
+| `g` | Changes the weekly goal. |
+| `d` | Deletes the habit, after you answer `y`. |
+| `p` / `n` | Shows the previous or the next month in the calendar. |
+| `t` | Switches between the dark and the light theme. |
+| `q` | Quits. |
+
+In a form, Enter confirms and Esc cancels. The dashboard reads and writes the same data file as the commands, so a habit added in one shows up in the other. Bad input (a goal of 9 days, a day in the future, a name that already exists) shows the usual one-line message in a corner and changes nothing.
+
+The dashboard needs a terminal you can type in. If its output is sent to a file or another program, it prints a one-line message and exits with code `1`.
+
 ### Command reference
 
 | Command | What it does | Arguments and options |
@@ -218,6 +272,7 @@ Type the number of an action and press Enter. When it asks for a habit, type the
 | `history` | Lists every day a habit was done, oldest first. | Required: `habit`. |
 | `list` | Lists every habit and its weekly goal. | No arguments required. |
 | `interactive` | Opens a menu from which every command above can be run, until you quit. | No arguments required. |
+| `dashboard` | Opens a full-screen view of every habit with its week, streak and calendar, where single keys check in, add, rename and delete. | No arguments required. |
 
 Habit names ignore capital letters and extra spaces: `Reading`, `reading` and ` reading ` are the same habit. A name with several words needs quotes, for example `uv run habit-tracker add "morning run" --days 2`.
 
@@ -236,6 +291,7 @@ uv run habit-tracker week --help
 uv run habit-tracker history --help
 uv run habit-tracker list --help
 uv run habit-tracker interactive --help
+uv run habit-tracker dashboard --help
 ```
 
 
@@ -243,12 +299,12 @@ uv run habit-tracker interactive --help
 
 If you have Docker, you can run Habit Tracker without installing Python or uv. Get the image in one of two ways.
 
-**Option 1: pull the published image.** Every merge to `main` and every version tag (such as `v1.0`) is checked, built and published to the GitHub Container Registry by our CI pipeline (the `release` job in `.github/workflows/check.yml`). The image is private to the course, so log in first with a GitHub personal access token that has the `read:packages` scope (paste the token when asked for a password). You do not need to clone the repository for this:
+**Option 1: pull the published image.** Every merge to `main` and every version tag (such as `v1.1`) is checked, built and published to the GitHub Container Registry by our CI pipeline (the `release` job in `.github/workflows/check.yml`). The image is private to the course, so log in first with a GitHub personal access token that has the `read:packages` scope (paste the token when asked for a password). You do not need to clone the repository for this:
 
 ```bash
 docker login ghcr.io -u <your-github-username>
-docker pull ghcr.io/esade-swdev-2026/habit-tracker:v1.0
-docker tag ghcr.io/esade-swdev-2026/habit-tracker:v1.0 habit-tracker
+docker pull ghcr.io/esade-swdev-2026/habit-tracker:v1.1
+docker tag ghcr.io/esade-swdev-2026/habit-tracker:v1.1 habit-tracker
 ```
 
 The last command gives the image the short name `habit-tracker`, so the commands below work as written.
@@ -280,6 +336,12 @@ The interactive mode also works in the container. It needs `-it`, which connects
 
 ```bash
 docker run --rm -it -v habit-tracker-data:/app/data habit-tracker interactive
+```
+
+So does the dashboard, with the same `-it`:
+
+```bash
+docker run --rm -it -v habit-tracker-data:/app/data habit-tracker dashboard
 ```
 
 To delete the saved habits and start over:
@@ -362,6 +424,8 @@ The project separates its logic, storage, and command-line interface into differ
 - `src/habit_tracker/habits.py` contains the core habit rules and logic, including check-ins, streak calculations, input validation, and monthly summaries.
 - `src/habit_tracker/history.py` formats the list of days a habit was done, for the `history` command.
 - `src/habit_tracker/menu.py` contains the menu of the interactive mode: the choices, how an answer is matched to a choice or a habit, and the overview table. It only takes and returns plain data.
+- `src/habit_tracker/dashboard.py` works out what the dashboard shows: one row per habit, the goal bar and the month calendar. It only takes and returns plain data.
+- `src/habit_tracker/tui.py` is the dashboard's screen, built with the Textual library: it draws what `dashboard.py` returns and turns each key into a call to the habit logic and storage.
 - `src/habit_tracker/storage.py` handles reading and writing habit data in the JSON file.
 - `src/habit_tracker/cli.py` defines the terminal commands, displays results and errors, and connects the commands to the habit logic and storage.
 - `src/habit_tracker/__main__.py` provides another entry point for running the Python package.
@@ -423,3 +487,5 @@ For the final submission, the `release` job in `.github/workflows/check.yml` was
 For the README example steps 8 and 9 (`history` and `target`), I (Albert) used Claude (claude.ai) for guidance and to draft the wording. I ran the commands myself and copied the real outputs.
 
 For the final submission, the interactive mode (`menu.py`, the `interactive` command in `cli.py`, their tests in `test_menu.py` and `test_cli.py`, and the README lines about it) was written by Claude Code at Can's request, then reviewed and committed by Can.
+
+After the final submission (`v1.0`), for Demo Day, the dashboard (`dashboard.py`, `tui.py`, the `dashboard` command in `cli.py`, their tests in `test_dashboard.py`, `test_tui.py` and `test_cli.py`, two lines in the `Dockerfile` that make it start fast and in full colour, and the README lines about it) was written by Claude Code at Can's request, then reviewed and committed by Can. That version is tagged `v1.1`; the version marked for the final submission is still `v1.0`.
