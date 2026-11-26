@@ -5,6 +5,7 @@ description = "Group project for Software Development for Business"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "textual>=6",
     "typer>=0.12",
 ]
 
